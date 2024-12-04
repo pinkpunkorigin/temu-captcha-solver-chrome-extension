@@ -1,0 +1,16 @@
+{
+    "compilerOptions": {
+        "noImplicitAny": false,
+        "noEmitOnError": true,
+        "removeComments": false,
+        "sourceMap": true,
+        "target": "es2021",
+        "lib": ["es2021", "dom"],
+    },
+    "include": [
+        "script.ts"
+    ],
+	"types": [
+		"chrome"
+	]
+}

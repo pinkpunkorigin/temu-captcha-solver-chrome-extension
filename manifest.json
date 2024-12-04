@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Temu Captcha Solver",
+  "description": "Automatically bypass any Temu captcha",
+  "version": "2.3",
+  "action": {
+    "default_popup": "hello.html",
+    "default_icon": "logo_icon_black_bg.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.temu.com/*"
+      ],
+      "all_frames": false,
+      "js": [
+        "script.js"
+      ]
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "greg@toughdata.net"
+    }
+  }
+}
