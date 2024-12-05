@@ -107,42 +107,35 @@ interface Request {
 
 	function findFirstElementToAppear(selectors: Array<string>): Promise<Element> {
 		return new Promise(resolve => {
-			let elementFound: Element
 			const observer: MutationObserver = new MutationObserver(mutations => {
-				for (const mutation of mutations) {
-					if (elementFound)
-						break
-					if (mutation.addedNodes === null) 
-						continue
-					mutation.addedNodes.forEach(node => {
-						if (node instanceof Element) {
-							let element = <HTMLElement>node
-							console.dir(element)
-							for (const selector of selectors) {
-								if (element.matches(selector)) {
-									console.debug(`element matched ${selector}`)
-									elementFound = element
-								} else if (element instanceof HTMLIFrameElement) {
-									let iframe = <HTMLIFrameElement>element 
-									setTimeout(() => {
-										let iframeElement = iframe.contentWindow.document.body.querySelector(selector)
-										if (iframeElement) {
-											console.debug(`element matched ${selector} in iframe`)
-											elementFound = iframeElement
-										} 
-									}, 3000)
-								} else {
-									console.debug(`element did not match ${selector}`)
-								}
+			for (const mutation of mutations) {
+				if (mutation.addedNodes === null) 
+					continue
+				let addedNode: Array<Node> = []
+				mutation.addedNodes.forEach(node => addedNode.push(node))
+				for (const node of addedNode)
+					for (const selector of selectors) {
+						if (node instanceof HTMLIFrameElement) {
+							let iframe = <HTMLIFrameElement>node 
+							setTimeout(() => {
+								let iframeElement = iframe.contentWindow.document.body.querySelector(selector)
+								if (iframeElement) {
+									console.debug(`element matched ${selector} in iframe`)
+									observer.disconnect()
+									console.dir(iframeElement)
+									return  resolve(iframeElement)
+								} 
+							}, 3000)
+						} else if (node instanceof Element) {
+							let element = <Element>node
+							if (element.querySelector(selector)) {
+								console.debug(`element matched ${selector}`)
+								observer.disconnect()
+								console.dir(element)
+								return resolve(element)
 							}
 						}
-					})
-				}
-				if (elementFound) {
-					console.debug("found selector in our list")
-					console.dir(elementFound)
-					observer.disconnect()
-					return resolve(elementFound)
+					}
 				}
 			})
 			observer.observe(CONTAINER, {
@@ -245,15 +238,15 @@ interface Request {
 	function anySelectorInListPresent(selectors: Array<string>): boolean {
 		for (const selector of selectors) {
 			let ele = document.querySelector(selector)
-			if (ele !== null) {
+			if (ele) {
 				console.log(`selector ${selector} is present`)
 				return true
 			}
 			let iframe = document.querySelector("iframe")
-			if (iframe !== null) {
+			if (iframe) {
 				console.log("checking for selector in iframe")
-				ele = iframe.contentWindow.document.querySelector(selector)
-				if (ele !== null) {
+				ele = iframe.contentWindow.document.body.querySelector(selector)
+				if (ele) {
 					console.log("Selector is present in iframe: " + selector)
 					return true
 				}
@@ -463,7 +456,7 @@ interface Request {
 	}
 
 	async function solveArcedSlide(): Promise<void> {
-		for (let i = 0; i < 3; i++) {
+		for (let i = 0; i < 10; i++) {
 			let puzzleImageSrc = await getImageSource(ARCED_SLIDE_PUZZLE_IMAGE_SELECTOR)
 			let pieceImageSrc = await getImageSource(ARCED_SLIDE_PIECE_IMAGE_SELECTOR)
 			let puzzleImg = getBase64StringFromDataURL(puzzleImageSrc)
@@ -637,7 +630,7 @@ interface Request {
 	}
 
 	async function solvePuzzle(): Promise<void> {
-		for (let i = 0; i < 3; i++) {
+		for (let i = 0; i < 10; i++) {
 			let sliderButton = document.querySelector(PUZZLE_BUTTON_SELECTOR)
 			let buttonCenter = getElementCenter(sliderButton)
 			let preRequestSlidePixels = 10
@@ -656,7 +649,7 @@ interface Request {
 			for (let i = 1; i < distance - preRequestSlidePixels; i++) {
 				await moveMouseTo(
 					buttonCenter.x + i + preRequestSlidePixels, 
-					buttonCenter.y - Math.log(i)
+					buttonCenter.y - Math.log(i) + Math.random() * 3
 				)
 				await new Promise(r => setTimeout(r, 10));
 			}

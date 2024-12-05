@@ -89,49 +89,50 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     })(CaptchaType || (CaptchaType = {}));
     function findFirstElementToAppear(selectors) {
         return new Promise(function (resolve) {
-            var elementFound;
             var observer = new MutationObserver(function (mutations) {
+                var _loop_1 = function (mutation) {
+                    if (mutation.addedNodes === null)
+                        return "continue";
+                    var addedNode = [];
+                    mutation.addedNodes.forEach(function (node) { return addedNode.push(node); });
+                    for (var _a = 0, addedNode_1 = addedNode; _a < addedNode_1.length; _a++) {
+                        var node = addedNode_1[_a];
+                        var _loop_2 = function (selector) {
+                            if (node instanceof HTMLIFrameElement) {
+                                var iframe_1 = node;
+                                setTimeout(function () {
+                                    var iframeElement = iframe_1.contentWindow.document.body.querySelector(selector);
+                                    if (iframeElement) {
+                                        console.debug("element matched ".concat(selector, " in iframe"));
+                                        observer.disconnect();
+                                        console.dir(iframeElement);
+                                        return resolve(iframeElement);
+                                    }
+                                }, 3000);
+                            }
+                            else if (node instanceof Element) {
+                                var element = node;
+                                if (element.querySelector(selector)) {
+                                    console.debug("element matched ".concat(selector));
+                                    observer.disconnect();
+                                    console.dir(element);
+                                    return { value: resolve(element) };
+                                }
+                            }
+                        };
+                        for (var _b = 0, selectors_1 = selectors; _b < selectors_1.length; _b++) {
+                            var selector = selectors_1[_b];
+                            var state_2 = _loop_2(selector);
+                            if (typeof state_2 === "object")
+                                return state_2;
+                        }
+                    }
+                };
                 for (var _i = 0, mutations_1 = mutations; _i < mutations_1.length; _i++) {
                     var mutation = mutations_1[_i];
-                    if (elementFound)
-                        break;
-                    if (mutation.addedNodes === null)
-                        continue;
-                    mutation.addedNodes.forEach(function (node) {
-                        if (node instanceof Element) {
-                            var element = node;
-                            console.dir(element);
-                            var _loop_1 = function (selector) {
-                                if (element.matches(selector)) {
-                                    console.debug("element matched ".concat(selector));
-                                    elementFound = element;
-                                }
-                                else if (element instanceof HTMLIFrameElement) {
-                                    var iframe_1 = element;
-                                    setTimeout(function () {
-                                        var iframeElement = iframe_1.contentWindow.document.body.querySelector(selector);
-                                        if (iframeElement) {
-                                            console.debug("element matched ".concat(selector, " in iframe"));
-                                            elementFound = iframeElement;
-                                        }
-                                    }, 3000);
-                                }
-                                else {
-                                    console.debug("element did not match ".concat(selector));
-                                }
-                            };
-                            for (var _i = 0, selectors_1 = selectors; _i < selectors_1.length; _i++) {
-                                var selector = selectors_1[_i];
-                                _loop_1(selector);
-                            }
-                        }
-                    });
-                }
-                if (elementFound) {
-                    console.debug("found selector in our list");
-                    console.dir(elementFound);
-                    observer.disconnect();
-                    return resolve(elementFound);
+                    var state_1 = _loop_1(mutation);
+                    if (typeof state_1 === "object")
+                        return state_1.value;
                 }
             });
             observer.observe(CONTAINER, {
@@ -285,15 +286,15 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         for (var _i = 0, selectors_2 = selectors; _i < selectors_2.length; _i++) {
             var selector = selectors_2[_i];
             var ele = document.querySelector(selector);
-            if (ele !== null) {
+            if (ele) {
                 console.log("selector ".concat(selector, " is present"));
                 return true;
             }
             var iframe = document.querySelector("iframe");
-            if (iframe !== null) {
+            if (iframe) {
                 console.log("checking for selector in iframe");
-                ele = iframe.contentWindow.document.querySelector(selector);
-                if (ele !== null) {
+                ele = iframe.contentWindow.document.body.querySelector(selector);
+                if (ele) {
                     console.log("Selector is present in iframe: " + selector);
                     return true;
                 }
@@ -560,7 +561,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                         i = 0;
                         _a.label = 1;
                     case 1:
-                        if (!(i < 3)) return [3 /*break*/, 25];
+                        if (!(i < 10)) return [3 /*break*/, 25];
                         return [4 /*yield*/, getImageSource(ARCED_SLIDE_PUZZLE_IMAGE_SELECTOR)];
                     case 2:
                         puzzleImageSrc = _a.sent();
@@ -773,7 +774,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                         i = 0;
                         _a.label = 1;
                     case 1:
-                        if (!(i < 3)) return [3 /*break*/, 15];
+                        if (!(i < 10)) return [3 /*break*/, 15];
                         sliderButton = document.querySelector(PUZZLE_BUTTON_SELECTOR);
                         buttonCenter = getElementCenter(sliderButton);
                         preRequestSlidePixels = 10;
@@ -803,7 +804,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                         _a.label = 7;
                     case 7:
                         if (!(i_4 < distance - preRequestSlidePixels)) return [3 /*break*/, 11];
-                        return [4 /*yield*/, moveMouseTo(buttonCenter.x + i_4 + preRequestSlidePixels, buttonCenter.y - Math.log(i_4))];
+                        return [4 /*yield*/, moveMouseTo(buttonCenter.x + i_4 + preRequestSlidePixels, buttonCenter.y - Math.log(i_4) + Math.random() * 3)];
                     case 8:
                         _a.sent();
                         return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 10); })];
