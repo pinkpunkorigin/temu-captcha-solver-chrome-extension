@@ -8,7 +8,8 @@
         "lib": ["es2021", "dom"],
     },
     "include": [
-        "script.ts"
+        "script.ts",
+		"script_ext.ts"
     ],
 	"types": [
 		"chrome"

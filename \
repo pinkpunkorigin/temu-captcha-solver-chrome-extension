@@ -29,7 +29,7 @@ interface Request {
 	let creditsUrl = "https://www.sadcaptcha.com/api/v1/license/credits?licenseKey="
 	let arcedSlideUrl = "https://www.sadcaptcha.com/api/v1/temu-arced-slide?licenseKey="
 	let puzzleUrl = "https://www.sadcaptcha.com/api/v1/puzzle?licenseKey="
-	let semanticShapesUrl = "https://www.sadcaptcha.com/api/v1/semantic-shapes?licenseKey="
+	let semShapesUrl = "https://www.sadcaptcha.com/api/v1/semantic-shapes?licenseKey="
 
 	const corsProxy = "https://corsproxy.io/?"
 	const API_HEADERS = new Headers({ "Content-Type": "application/json" })
@@ -51,13 +51,11 @@ interface Request {
 	const SEMANTIC_SHAPES_IMAGE = "#captchaImg"
 	const SEMANTIC_SHAPES_REFRESH_BUTTON = ".refresh-27d6x"
 	const SEMANTIC_SHAPES_UNIQUE_IDENTIFIERS = [SEMANTIC_SHAPES_IMAGE]
-
 	const CAPTCHA_PRESENCE_INDICATORS = [
-		"#Picture",
-		"#captchaImg",
 		"#slide-button",
 		"#Slider",
-		"#slider"
+		"#slider",
+		SEMANTIC_SHAPES_IFRAME
 	]
 
 	type Point = {
@@ -105,44 +103,39 @@ interface Request {
 		SEMANTIC_SHAPES
 	}
 
-	function findFirstElementToAppear(selectors: Array<string>): Promise<Element> {
+	function findFirstElementInList(selectors: Array<string>): Promise<Element> {
 		return new Promise(resolve => {
-			let elementFound: Element
+			let elementFound: Element = null
 			const observer: MutationObserver = new MutationObserver(mutations => {
-				for (const mutation of mutations) {
-					if (elementFound)
-						break
-					if (mutation.addedNodes === null) 
-						continue
-					mutation.addedNodes.forEach(node => {
-						if (node instanceof Element) {
-							let element = <HTMLElement>node
-							console.dir(element)
-							for (const selector of selectors) {
-								if (element.matches(selector)) {
-									console.debug(`element matched ${selector}`)
-									elementFound = element
-								} else if (element instanceof HTMLIFrameElement) {
-									let iframe = <HTMLIFrameElement>element 
-									setTimeout(() => {
-										let iframeElement = iframe.contentWindow.document.body.querySelector(selector)
-										if (iframeElement) {
-											console.debug(`element matched ${selector} in iframe`)
-											elementFound = iframeElement
-										} 
-									}, 3000)
-								} else {
-									console.debug(`element did not match ${selector}`)
-								}
-							}
+				selectors.forEach(selector => {
+					console.debug("checking for selector: " + selector)
+					elementFound = document.querySelector(selector)
+					if (elementFound !== null) {
+						console.debug("Selector found by mutation observer: " + selector)
+						observer.disconnect()
+						return
+					}
+					let iframe = document.querySelector("iframe")
+					if (iframe !== null) {
+						console.debug("Iframe found: ")
+						console.dir(iframe)
+						new Promise(r => setTimeout(r, 1000)).then();
+						elementFound = iframe.contentWindow.document.querySelector(selector)
+						console.debug("found element in iframe:")
+						console.dir(elementFound)
+						if (elementFound !== null) {
+							console.debug("Selector found by mutation observer in iframe: " + selector)
+							observer.disconnect()
+							return
 						}
-					})
-				}
-				if (elementFound) {
-					console.debug("found selector in our list")
+					}
+				})
+				if (elementFound !== null) {
+					console.log("returning selector from mutation observer: ")
 					console.dir(elementFound)
-					observer.disconnect()
 					return resolve(elementFound)
+				} else {
+					console.debug("unimportant mutation seen")
 				}
 			})
 			observer.observe(CONTAINER, {
@@ -234,7 +227,7 @@ interface Request {
 	}
 
 	async function semanticShapesApiCall(challenge: string, imageB64: string): Promise<SemanticShapesResponse> {
-		let resp = await apiCall(semanticShapesUrl, {
+		let resp = await apiCall(puzzleUrl, {
 			challenge: challenge,
 			imageB64: imageB64
 		})
@@ -402,17 +395,9 @@ interface Request {
 		console.log("sent mouse up")
 	}
 
-	function clickMouse(element: Element, x: number, y: number): void {
+	async function clickMouse(element: Element, x: number, y: number): Promise<void> {
 		element.dispatchEvent(
-			new MouseEvent("mousedown", {
-				bubbles: true,
-				clientX: x,
-				clientY: y
-			})
-		)
-		setTimeout(() => null, 200)
-		element.dispatchEvent(
-			new MouseEvent("mouseup", {
+			new MouseEvent("click", {
 				bubbles: true,
 				clientX: x,
 				clientY: y
@@ -441,10 +426,10 @@ interface Request {
 		let rect = element.getBoundingClientRect()
 		let x = rect.x + (rect.width / 2)
 		let y = rect.y + (rect.height / 2)
-		clickMouse(element, x, y)
+		await clickMouse(element, x, y)
 	}
 
-	function clickProportional(element: Element, proportionX: number, proportionY: number): void {
+	async function clickProportional(element: Element, proportionX: number, proportionY: number): Promise<void> {
 		let boundingBox = element.getBoundingClientRect()
 		let xOrigin = boundingBox.x
 		let yOrigin = boundingBox.y
@@ -452,7 +437,6 @@ interface Request {
 		let yOffset = (proportionY * boundingBox.height)
 		let x = xOrigin + xOffset
 		let y = yOrigin + yOffset
-		console.log(`clicked at ${x}, ${y}`)
 		clickMouse(element, x, y)
 	}
 
@@ -675,7 +659,7 @@ interface Request {
 			let img = getBase64StringFromDataURL(src)
 			let challenge = getTextContent(SEMANTIC_SHAPES_CHALLENGE_TEXT, SEMANTIC_SHAPES_IFRAME)
 			let res = await semanticShapesApiCall(challenge, img)
-			let ele = document.querySelector("iframe").contentWindow.document.body.querySelector(SEMANTIC_SHAPES_IMAGE)
+			let ele = await findFirstElementInList([SEMANTIC_SHAPES_IFRAME])
 			for (const point of res.proportionalPoints) {
 				clickProportional(ele, point.proportionX, point.proportionY)
 				await new Promise(r => setTimeout(r, 1337));
@@ -702,8 +686,7 @@ interface Request {
 
 	let isCurrentSolve: boolean
 	async function solveCaptchaLoop() {
-		const _: Element = await findFirstElementToAppear(CAPTCHA_PRESENCE_INDICATORS)
-		console.log("Captcha detected")
+		const _: Element = await findFirstElementInList(CAPTCHA_PRESENCE_INDICATORS)
 		const captchaType: CaptchaType = await identifyCaptcha()
 		try {
 			if (await creditsApiCall() <= 0) {

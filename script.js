@@ -8,8 +8,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
@@ -56,7 +56,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     var creditsUrl = "https://www.sadcaptcha.com/api/v1/license/credits?licenseKey=";
     var arcedSlideUrl = "https://www.sadcaptcha.com/api/v1/temu-arced-slide?licenseKey=";
     var puzzleUrl = "https://www.sadcaptcha.com/api/v1/puzzle?licenseKey=";
-    var semShapesUrl = "https://www.sadcaptcha.com/api/v1/semantic-shapes?licenseKey=";
+    var semanticShapesUrl = "https://www.sadcaptcha.com/api/v1/semantic-shapes?licenseKey=";
     var corsProxy = "https://corsproxy.io/?";
     var API_HEADERS = new Headers({ "Content-Type": "application/json" });
     var ARCED_SLIDE_PUZZLE_IMAGE_SELECTOR = "#slider > img";
@@ -73,12 +73,13 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     var SEMANTIC_SHAPES_CHALLENGE_TEXT = ".picture-text-2Alt0";
     var SEMANTIC_SHAPES_IMAGE = "#captchaImg";
     var SEMANTIC_SHAPES_REFRESH_BUTTON = ".refresh-27d6x";
-    var SEMANTIC_SHAPES_UNIQUE_IDENTIFIERS = [SEMANTIC_SHAPES_IFRAME];
+    var SEMANTIC_SHAPES_UNIQUE_IDENTIFIERS = [SEMANTIC_SHAPES_IMAGE];
     var CAPTCHA_PRESENCE_INDICATORS = [
+        "#Picture",
+        "#captchaImg",
         "#slide-button",
         "#Slider",
-        "#slider",
-        SEMANTIC_SHAPES_IFRAME
+        "#slider"
     ];
     var CaptchaType;
     (function (CaptchaType) {
@@ -86,36 +87,51 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         CaptchaType[CaptchaType["ARCED_SLIDE"] = 1] = "ARCED_SLIDE";
         CaptchaType[CaptchaType["SEMANTIC_SHAPES"] = 2] = "SEMANTIC_SHAPES";
     })(CaptchaType || (CaptchaType = {}));
-    function waitForAnyElementInList(selectors) {
+    function findFirstElementToAppear(selectors) {
         return new Promise(function (resolve) {
-            var selectorFound = null;
-            // Check if already present
-            selectors.forEach(function (selector) {
-                if (document.querySelector(selector)) {
-                    selectorFound = selector;
-                    console.log("Selector found: " + selector);
-                    return resolve(document.querySelector(selectorFound));
-                }
-            });
-            if (selectorFound !== null) {
-                return resolve(document.querySelector(selectorFound));
-            }
-            // Then start waiting if not found immediately
+            var elementFound;
             var observer = new MutationObserver(function (mutations) {
-                selectors.forEach(function (selector) {
-                    if (document.querySelector(selector)) {
-                        selectorFound = selector;
-                        console.log("Selector found by mutation observer: " + selector);
-                        observer.disconnect();
-                        return;
-                    }
-                });
-                if (selectorFound !== null) {
-                    console.log("returning selector from mutation observer: " + selectorFound);
-                    return resolve(document.querySelector(selectorFound));
+                for (var _i = 0, mutations_1 = mutations; _i < mutations_1.length; _i++) {
+                    var mutation = mutations_1[_i];
+                    if (elementFound)
+                        break;
+                    if (mutation.addedNodes === null)
+                        continue;
+                    mutation.addedNodes.forEach(function (node) {
+                        if (node instanceof Element) {
+                            var element = node;
+                            console.dir(element);
+                            var _loop_1 = function (selector) {
+                                if (element.matches(selector)) {
+                                    console.debug("element matched ".concat(selector));
+                                    elementFound = element;
+                                }
+                                else if (element instanceof HTMLIFrameElement) {
+                                    var iframe_1 = element;
+                                    setTimeout(function () {
+                                        var iframeElement = iframe_1.contentWindow.document.body.querySelector(selector);
+                                        if (iframeElement) {
+                                            console.debug("element matched ".concat(selector, " in iframe"));
+                                            elementFound = iframeElement;
+                                        }
+                                    }, 3000);
+                                }
+                                else {
+                                    console.debug("element did not match ".concat(selector));
+                                }
+                            };
+                            for (var _i = 0, selectors_1 = selectors; _i < selectors_1.length; _i++) {
+                                var selector = selectors_1[_i];
+                                _loop_1(selector);
+                            }
+                        }
+                    });
                 }
-                else {
-                    console.log("unimportant mutation seen");
+                if (elementFound) {
+                    console.debug("found selector in our list");
+                    console.dir(elementFound);
+                    observer.disconnect();
+                    return resolve(elementFound);
                 }
             });
             observer.observe(CONTAINER, {
@@ -139,7 +155,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                 return resolve(targetDocument.querySelector(selector));
             }
             else {
-                var observer_1 = new MutationObserver(function (mutations) {
+                var observer_1 = new MutationObserver(function (_) {
                     if (targetDocument.querySelector(selector)) {
                         observer_1.disconnect();
                         console.log("Selector found by mutation observer: " + selector);
@@ -251,7 +267,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
             var resp, data;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, apiCall(puzzleUrl, {
+                    case 0: return [4 /*yield*/, apiCall(semanticShapesUrl, {
                             challenge: challenge,
                             imageB64: imageB64
                         })];
@@ -266,13 +282,24 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         });
     }
     function anySelectorInListPresent(selectors) {
-        for (var _i = 0, selectors_1 = selectors; _i < selectors_1.length; _i++) {
-            var selector = selectors_1[_i];
+        for (var _i = 0, selectors_2 = selectors; _i < selectors_2.length; _i++) {
+            var selector = selectors_2[_i];
             var ele = document.querySelector(selector);
             if (ele !== null) {
+                console.log("selector ".concat(selector, " is present"));
                 return true;
             }
+            var iframe = document.querySelector("iframe");
+            if (iframe !== null) {
+                console.log("checking for selector in iframe");
+                ele = iframe.contentWindow.document.querySelector(selector);
+                if (ele !== null) {
+                    console.log("Selector is present in iframe: " + selector);
+                    return true;
+                }
+            }
         }
+        console.log("no selector in list is present");
         return false;
     }
     function identifyCaptcha() {
@@ -469,16 +496,17 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         });
     }
     function clickMouse(element, x, y) {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                element.dispatchEvent(new MouseEvent("click", {
-                    bubbles: true,
-                    clientX: x,
-                    clientY: y
-                }));
-                return [2 /*return*/];
-            });
-        });
+        element.dispatchEvent(new MouseEvent("mousedown", {
+            bubbles: true,
+            clientX: x,
+            clientY: y
+        }));
+        setTimeout(function () { return null; }, 200);
+        element.dispatchEvent(new MouseEvent("mouseup", {
+            bubbles: true,
+            clientX: x,
+            clientY: y
+        }));
     }
     function getElementCenter(element) {
         var rect = element.getBoundingClientRect();
@@ -499,34 +527,24 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         return __awaiter(this, void 0, void 0, function () {
             var rect, x, y;
             return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        rect = element.getBoundingClientRect();
-                        x = rect.x + (rect.width / 2);
-                        y = rect.y + (rect.height / 2);
-                        return [4 /*yield*/, clickMouse(element, x, y)];
-                    case 1:
-                        _a.sent();
-                        return [2 /*return*/];
-                }
-            });
-        });
-    }
-    function clickProportional(element, proportionX, proportionY) {
-        return __awaiter(this, void 0, void 0, function () {
-            var boundingBox, xOrigin, yOrigin, xOffset, yOffset, x, y;
-            return __generator(this, function (_a) {
-                boundingBox = element.getBoundingClientRect();
-                xOrigin = boundingBox.x;
-                yOrigin = boundingBox.y;
-                xOffset = (proportionX * boundingBox.width);
-                yOffset = (proportionY * boundingBox.height);
-                x = xOrigin + xOffset;
-                y = yOrigin + yOffset;
+                rect = element.getBoundingClientRect();
+                x = rect.x + (rect.width / 2);
+                y = rect.y + (rect.height / 2);
                 clickMouse(element, x, y);
                 return [2 /*return*/];
             });
         });
+    }
+    function clickProportional(element, proportionX, proportionY) {
+        var boundingBox = element.getBoundingClientRect();
+        var xOrigin = boundingBox.x;
+        var yOrigin = boundingBox.y;
+        var xOffset = (proportionX * boundingBox.width);
+        var yOffset = (proportionY * boundingBox.height);
+        var x = xOrigin + xOffset;
+        var y = yOrigin + yOffset;
+        console.log("clicked at ".concat(x, ", ").concat(y));
+        clickMouse(element, x, y);
     }
     function computePuzzleSlideDistance(proportionX, puzzleImageEle) {
         var distance = puzzleImageEle.getBoundingClientRect().width * proportionX;
@@ -535,14 +553,14 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
     function solveArcedSlide() {
         return __awaiter(this, void 0, void 0, function () {
-            var i, puzzleImageSrc, pieceImageSrc, puzzleImg, pieceImg, slideButtonEle, startX, startY, puzzleEle, trajectory, solution, endX, solutionDistanceBackwards, i_1;
+            var i, puzzleImageSrc, pieceImageSrc, puzzleImg, pieceImg, slideButtonEle, startX, startY, puzzleEle, trajectory, solution, currentX, solutionDistanceBackwards, overshoot, mouseStep, i_1, i_2, i_3;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
                         i = 0;
                         _a.label = 1;
                     case 1:
-                        if (!(i < 3)) return [3 /*break*/, 13];
+                        if (!(i < 3)) return [3 /*break*/, 25];
                         return [4 /*yield*/, getImageSource(ARCED_SLIDE_PUZZLE_IMAGE_SELECTOR)];
                     case 2:
                         puzzleImageSrc = _a.sent();
@@ -565,42 +583,82 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                             })];
                     case 5:
                         solution = _a.sent();
-                        endX = getElementCenter(slideButtonEle).x;
-                        solutionDistanceBackwards = endX - startX - solution;
-                        i_1 = 0;
-                        _a.label = 6;
+                        currentX = getElementCenter(slideButtonEle).x;
+                        solutionDistanceBackwards = currentX - startX - solution;
+                        overshoot = 6;
+                        mouseStep = 2;
+                        return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 100); })];
                     case 6:
-                        if (!(i_1 < solutionDistanceBackwards)) return [3 /*break*/, 9];
-                        moveMouseTo(endX - i_1, startY);
-                        return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 10); })];
+                        _a.sent();
+                        i_1 = 0;
+                        _a.label = 7;
                     case 7:
-                        _a.sent();
-                        _a.label = 8;
+                        if (!(i_1 < solutionDistanceBackwards + overshoot)) return [3 /*break*/, 10];
+                        moveMouseTo(currentX - i_1, startY + Math.random() * 5);
+                        return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 10 + Math.random() * 5); })];
                     case 8:
-                        i_1++;
-                        return [3 /*break*/, 6];
-                    case 9: return [4 /*yield*/, mouseUp(startX + solution, startY)];
-                    case 10:
                         _a.sent();
-                        return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 3000); })];
+                        _a.label = 9;
+                    case 9:
+                        i_1 += mouseStep;
+                        return [3 /*break*/, 7];
+                    case 10: return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 500); })];
                     case 11:
                         _a.sent();
-                        if (captchaIsPresent())
-                            return [3 /*break*/, 12];
-                        else
-                            return [2 /*return*/];
+                        currentX = getElementCenter(slideButtonEle).x;
+                        i_2 = 0;
                         _a.label = 12;
                     case 12:
+                        if (!(i_2 < overshoot + overshoot)) return [3 /*break*/, 15];
+                        moveMouseTo(currentX + i_2, startY + Math.random() * 5);
+                        return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 30); })];
+                    case 13:
+                        _a.sent();
+                        _a.label = 14;
+                    case 14:
+                        i_2++;
+                        return [3 /*break*/, 12];
+                    case 15: return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 150); })];
+                    case 16:
+                        _a.sent();
+                        currentX = getElementCenter(slideButtonEle).x;
+                        i_3 = 0;
+                        _a.label = 17;
+                    case 17:
+                        if (!(i_3 < overshoot)) return [3 /*break*/, 20];
+                        moveMouseTo(currentX - i_3, startY + Math.random() * 5);
+                        return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 50); })];
+                    case 18:
+                        _a.sent();
+                        _a.label = 19;
+                    case 19:
+                        i_3++;
+                        return [3 /*break*/, 17];
+                    case 20: return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 300); })];
+                    case 21:
+                        _a.sent();
+                        return [4 /*yield*/, mouseUp(startX + solution, startY)];
+                    case 22:
+                        _a.sent();
+                        return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 3000); })];
+                    case 23:
+                        _a.sent();
+                        if (captchaIsPresent())
+                            return [3 /*break*/, 24];
+                        else
+                            return [2 /*return*/];
+                        _a.label = 24;
+                    case 24:
                         i++;
                         return [3 /*break*/, 1];
-                    case 13: return [2 /*return*/];
+                    case 25: return [2 /*return*/];
                 }
             });
         });
     }
     function getSlidePieceTrajectory(slideButton, puzzle) {
         return __awaiter(this, void 0, void 0, function () {
-            var sliderPieceContainer, slideBarWidth, timesPieceDidNotMove, slideButtonCenter, puzzleImageBoundingBox, trajectory, pixel, trajectoryElement;
+            var sliderPieceContainer, slideBarWidth, timesPieceDidNotMove, slideButtonCenter, puzzleImageBoundingBox, trajectory, mouseStep, pixel, trajectoryElement;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -612,6 +670,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                         slideButtonCenter = getElementCenter(slideButton);
                         puzzleImageBoundingBox = puzzle.getBoundingClientRect();
                         trajectory = [];
+                        mouseStep = 4;
                         mouseDown(slideButtonCenter.x, slideButtonCenter.y);
                         slideButton.dispatchEvent(new MouseEvent("mousedown", {
                             cancelable: true,
@@ -624,7 +683,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                         _a.label = 1;
                     case 1:
                         if (!(pixel < slideBarWidth)) return [3 /*break*/, 5];
-                        return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 10); })];
+                        return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 20); })];
                     case 2:
                         _a.sent();
                         //moveMouseTo(slideButtonCenter.x + pixel, slideButtonCenter.y - pixel)
@@ -633,26 +692,26 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                             bubbles: true,
                             view: window,
                             clientX: slideButtonCenter.x + pixel,
-                            clientY: slideButtonCenter.y + pixel
+                            clientY: slideButtonCenter.y - Math.log(pixel + 1)
                         }));
-                        return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 10); })];
+                        return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 10 + Math.random() * 5); })];
                     case 3:
                         _a.sent();
                         trajectoryElement = getTrajectoryElement(pixel, puzzleImageBoundingBox, sliderPieceContainer);
                         trajectory.push(trajectoryElement);
-                        if (trajectory.length < 100)
+                        if (trajectory.length < 100 / mouseStep)
                             return [3 /*break*/, 4];
                         if (pieceIsNotMoving(trajectory))
                             timesPieceDidNotMove++;
                         else
                             timesPieceDidNotMove = 0;
-                        if (timesPieceDidNotMove >= 10)
+                        if (timesPieceDidNotMove >= 10 / mouseStep)
                             return [3 /*break*/, 5];
                         console.log("trajectory element:");
                         console.dir(trajectoryElement);
                         _a.label = 4;
                     case 4:
-                        pixel++;
+                        pixel += mouseStep;
                         return [3 /*break*/, 1];
                     case 5: return [2 /*return*/, trajectory];
                 }
@@ -707,7 +766,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
     function solvePuzzle() {
         return __awaiter(this, void 0, void 0, function () {
-            var i, sliderButton, buttonCenter, preRequestSlidePixels, puzzleSrc, pieceSrc, puzzleImg, pieceImg, solution, puzzleImageEle, distance, i_2;
+            var i, sliderButton, buttonCenter, preRequestSlidePixels, puzzleSrc, pieceSrc, puzzleImg, pieceImg, solution, puzzleImageEle, distance, i_4;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -740,11 +799,11 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                         console.log("got API result: " + solution);
                         puzzleImageEle = document.querySelector(PUZZLE_PUZZLE_IMAGE_SELECTOR);
                         distance = computePuzzleSlideDistance(solution, puzzleImageEle);
-                        i_2 = 1;
+                        i_4 = 1;
                         _a.label = 7;
                     case 7:
-                        if (!(i_2 < distance - preRequestSlidePixels)) return [3 /*break*/, 11];
-                        return [4 /*yield*/, moveMouseTo(buttonCenter.x + i_2 + preRequestSlidePixels, buttonCenter.y - Math.log(i_2))];
+                        if (!(i_4 < distance - preRequestSlidePixels)) return [3 /*break*/, 11];
+                        return [4 /*yield*/, moveMouseTo(buttonCenter.x + i_4 + preRequestSlidePixels, buttonCenter.y - Math.log(i_4))];
                     case 8:
                         _a.sent();
                         return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 10); })];
@@ -752,7 +811,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                         _a.sent();
                         _a.label = 10;
                     case 10:
-                        i_2++;
+                        i_4++;
                         return [3 /*break*/, 7];
                     case 11: return [4 /*yield*/, mouseUp(buttonCenter.x + distance, buttonCenter.x - distance)];
                     case 12:
@@ -782,7 +841,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                         i = 0;
                         _b.label = 1;
                     case 1:
-                        if (!(i < 3)) return [3 /*break*/, 11];
+                        if (!(i < 3)) return [3 /*break*/, 10];
                         return [4 /*yield*/, getImageSource(SEMANTIC_SHAPES_IMAGE, SEMANTIC_SHAPES_IFRAME)];
                     case 2:
                         src = _b.sent();
@@ -791,34 +850,32 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                         return [4 /*yield*/, semanticShapesApiCall(challenge, img)];
                     case 3:
                         res = _b.sent();
-                        return [4 /*yield*/, waitForElement(SEMANTIC_SHAPES_IMAGE, SEMANTIC_SHAPES_IFRAME)];
-                    case 4:
-                        ele = _b.sent();
+                        ele = document.querySelector("iframe").contentWindow.document.body.querySelector(SEMANTIC_SHAPES_IMAGE);
                         _i = 0, _a = res.proportionalPoints;
-                        _b.label = 5;
-                    case 5:
-                        if (!(_i < _a.length)) return [3 /*break*/, 8];
+                        _b.label = 4;
+                    case 4:
+                        if (!(_i < _a.length)) return [3 /*break*/, 7];
                         point = _a[_i];
                         clickProportional(ele, point.proportionX, point.proportionY);
                         return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 1337); })];
-                    case 6:
+                    case 5:
                         _b.sent();
-                        _b.label = 7;
-                    case 7:
+                        _b.label = 6;
+                    case 6:
                         _i++;
-                        return [3 /*break*/, 5];
-                    case 8: return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 3000); })];
-                    case 9:
+                        return [3 /*break*/, 4];
+                    case 7: return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 3000); })];
+                    case 8:
                         _b.sent();
                         if (captchaIsPresent())
-                            return [3 /*break*/, 10];
+                            return [3 /*break*/, 9];
                         else
                             return [2 /*return*/];
-                        _b.label = 10;
-                    case 10:
+                        _b.label = 9;
+                    case 9:
                         i++;
                         return [3 /*break*/, 1];
-                    case 11: return [2 /*return*/];
+                    case 10: return [2 /*return*/];
                 }
             });
         });
@@ -839,9 +896,10 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
             var _, captchaType, e_1;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, waitForAnyElementInList(CAPTCHA_PRESENCE_INDICATORS)];
+                    case 0: return [4 /*yield*/, findFirstElementToAppear(CAPTCHA_PRESENCE_INDICATORS)];
                     case 1:
                         _ = _a.sent();
+                        console.log("Captcha detected");
                         return [4 /*yield*/, identifyCaptcha()];
                     case 2:
                         captchaType = _a.sent();
