@@ -300,7 +300,7 @@ interface Request {
 		})
 	}
 
-	async function mouseUp(x: number, y: number): Promise<void> {
+	function mouseUp(x: number, y: number): void {
 		CONTAINER.dispatchEvent(
 			new MouseEvent("mouseup", {
 				bubbles: true,
@@ -312,7 +312,7 @@ interface Request {
 		console.log("mouse up at " + x + ", " + y)
 	}
 
-	async function mouseDown(x: number, y: number, ele?: Element): Promise<void> {
+	function mouseDown(x: number, y: number, ele?: Element): void {
 		let c: Element
 		if (ele === undefined) {
 			c = CONTAINER
@@ -330,10 +330,37 @@ interface Request {
 			})
 		)
 		console.log("mouse down at " + x + ", " + y)
+	} 
+
+	function mouseEnterPage(): void {
+		let width = window.innerWidth
+		let centerX = window.innerWidth / 2
+		let centerY = window.innerHeight / 2
+		CONTAINER.dispatchEvent(
+			new PointerEvent("pointerover", {
+				pointerType: "mouse",
+				cancelable: true,
+				bubbles: true,
+				view: window,
+				clientX: width,
+				clientY: centerY
+			})
+		)
+		CONTAINER.dispatchEvent(
+			new MouseEvent("mouseover", {
+				cancelable: true,
+				bubbles: true,
+				view: window,
+				clientX: width,
+				clientY: centerY
+			})
+		)
+		for (let i = 0; i < centerX; i++) {
+			mouseMove(width - i, centerY)
+		}
 	}
 
-
-	async function moveMouseTo(x: number, y: number, ele?: Element): Promise<void> {
+	function mouseMove(x: number, y: number, ele?: Element): void {
 		let c: Element
 		if (ele === undefined) {
 			c = CONTAINER
@@ -353,49 +380,15 @@ interface Request {
 		console.log("moved mouse to " + x + ", " + y)
 	}
 
-	async function dragElementHorizontal(
-			selector: string,
-			xOffset: number,
-	): Promise<void> {
-		console.log("preparing to drag " + selector + " by " + xOffset + " pixels")
-		let ele = document.querySelector(selector)
-		let box = ele.getBoundingClientRect()
-		let startX = (box.x + (box.width / 133.7))
-		let startY = (box.y + (box.height / 133.7))
-		moveMouseTo(startX, startY)
-		await new Promise(r => setTimeout(r, 133.7));
-		ele.dispatchEvent(
-			new PointerEvent("mousedown", {
-				pointerType: "mouse",
-				cancelable: true,
+	function mouseClick(element: Element, x: number, y: number): void {
+		element.dispatchEvent(
+			new MouseEvent("mouseover", {
 				bubbles: true,
-				view: window,
-				clientX: startX,
-				clientY: startY
+				clientX: x,
+				clientY: y
 			})
 		)
-		console.log("sent mouse down at " + startX + ", " + startY)
-		await new Promise(r => setTimeout(r, 133.7));
-		for (let i = 0; i < xOffset; i++) {
-			ele.dispatchEvent(
-				new PointerEvent("mousemove", {
-					pointerType: "mouse",
-					cancelable: true,
-					bubbles: true,
-					view: window,
-					clientX: startX + i,
-					clientY: startY
-				})
-			)
-			await new Promise(r => setTimeout(r, 1.337));
-			console.log("sent mouse mouse move at " + (startX + i) + ", " + startY)
-		}
-		await new Promise(r => setTimeout(r, 133.7));
-		ele.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }))
-		console.log("sent mouse up")
-	}
-
-	function clickMouse(element: Element, x: number, y: number): void {
+		setTimeout(() => null, 10)
 		element.dispatchEvent(
 			new MouseEvent("mousedown", {
 				bubbles: true,
@@ -434,7 +427,7 @@ interface Request {
 		let rect = element.getBoundingClientRect()
 		let x = rect.x + (rect.width / 2)
 		let y = rect.y + (rect.height / 2)
-		clickMouse(element, x, y)
+		mouseClick(element, x, y)
 	}
 
 	function clickProportional(element: Element, proportionX: number, proportionY: number): void {
@@ -446,7 +439,7 @@ interface Request {
 		let x = xOrigin + xOffset
 		let y = yOrigin + yOffset
 		console.log(`clicked at ${x}, ${y}`)
-		clickMouse(element, x, y)
+		mouseClick(element, x, y)
 	}
 
 	function computePuzzleSlideDistance(proportionX: number, puzzleImageEle: Element): number {
@@ -456,71 +449,40 @@ interface Request {
 	}
 
 	async function solveArcedSlide(): Promise<void> {
-		for (let i = 0; i < 10; i++) {
-			let puzzleImageSrc = await getImageSource(ARCED_SLIDE_PUZZLE_IMAGE_SELECTOR)
-			let pieceImageSrc = await getImageSource(ARCED_SLIDE_PIECE_IMAGE_SELECTOR)
-			let puzzleImg = getBase64StringFromDataURL(puzzleImageSrc)
-			let pieceImg = getBase64StringFromDataURL(pieceImageSrc)
-			let slideButtonEle = document.querySelector(ARCED_SLIDE_BUTTON_SELECTOR)
-			const startX = getElementCenter(slideButtonEle).x
-			const startY = getElementCenter(slideButtonEle).y
-			let puzzleEle = document.querySelector(ARCED_SLIDE_PUZZLE_IMAGE_SELECTOR)
-			let trajectory = await getSlidePieceTrajectory(slideButtonEle, puzzleEle)
-			let solution = await arcedSlideApiCall({
-				piece_image_b64: pieceImg,
-				puzzle_image_b64: puzzleImg,
-				slide_piece_trajectory: trajectory
-			})
-			let currentX = getElementCenter(slideButtonEle).x
-			let solutionDistanceBackwards = currentX - startX - solution
-			let overshoot = 6
-			let mouseStep = 2
-			await new Promise(r => setTimeout(r, 100));
-			for (
-					let i = 0;
-					i < solutionDistanceBackwards + overshoot;
-					i += mouseStep
-			) {
-				moveMouseTo(
-					currentX - i,
-					startY + Math.random() * 5
-				)
-				await new Promise(r => setTimeout(r, 10 + Math.random() * 5));
-			}
-			await new Promise(r => setTimeout(r, 500));
-			currentX = getElementCenter(slideButtonEle).x
-			for (
-					let i = 0;
-					i < overshoot + overshoot;
-					i++
-			) {
-				moveMouseTo(
-					currentX + i,
-					startY + Math.random() * 5
-				)
-				await new Promise(r => setTimeout(r, 30));
-			}
-			await new Promise(r => setTimeout(r, 150));
-			currentX = getElementCenter(slideButtonEle).x
-			for (
-					let i = 0;
-					i < overshoot;
-					i++
-			) {
-				moveMouseTo(
-					currentX - i,
-					startY + Math.random() * 5
-				)
-				await new Promise(r => setTimeout(r, 50));
-			}
-			await new Promise(r => setTimeout(r, 300));
-			await mouseUp(startX + solution, startY)
-			await new Promise(r => setTimeout(r, 3000));
-			if (captchaIsPresent())
-				continue
-			else
-				return
+		let puzzleImageSrc = await getImageSource(ARCED_SLIDE_PUZZLE_IMAGE_SELECTOR)
+		let pieceImageSrc = await getImageSource(ARCED_SLIDE_PIECE_IMAGE_SELECTOR)
+		let puzzleImg = getBase64StringFromDataURL(puzzleImageSrc)
+		let pieceImg = getBase64StringFromDataURL(pieceImageSrc)
+		let slideButtonEle = document.querySelector(ARCED_SLIDE_BUTTON_SELECTOR)
+		const startX = getElementCenter(slideButtonEle).x
+		const startY = getElementCenter(slideButtonEle).y
+		let puzzleEle = document.querySelector(ARCED_SLIDE_PUZZLE_IMAGE_SELECTOR)
+		let trajectory = await getSlidePieceTrajectory(slideButtonEle, puzzleEle)
+		let solution = await arcedSlideApiCall({
+			piece_image_b64: pieceImg,
+			puzzle_image_b64: puzzleImg,
+			slide_piece_trajectory: trajectory
+		})
+		let currentX = getElementCenter(slideButtonEle).x
+		let solutionDistanceBackwards = currentX - startX - solution
+		let overshoot = 6
+		let mouseStep = 2
+		await new Promise(r => setTimeout(r, 100));
+		for (
+				let i = 0;
+				i < solutionDistanceBackwards;
+				i += 1
+		) {
+			mouseMove(
+				currentX - i,
+				startY + Math.random() * 5
+			)
+			await new Promise(r => setTimeout(r, 10 + Math.random() * 5));
 		}
+		await new Promise(r => setTimeout(r, 300));
+		mouseMove(startX + solution, startY)
+		mouseUp(startX + solution, startY)
+		await new Promise(r => setTimeout(r, 3000));
 	}
 
 	async function getSlidePieceTrajectory(slideButton: Element, puzzle: Element): Promise<Array<TrajectoryElement>> {
@@ -532,7 +494,9 @@ interface Request {
 		let slideButtonCenter = getElementCenter(slideButton)
 		let puzzleImageBoundingBox = puzzle.getBoundingClientRect()
 		let trajectory: Array<TrajectoryElement> = []
-		let mouseStep = 4
+		let mouseStep = 5
+		mouseEnterPage()
+		mouseMove(slideButtonCenter.x, slideButtonCenter.y)
 		mouseDown(slideButtonCenter.x, slideButtonCenter.y)
 		slideButton.dispatchEvent(
 			new MouseEvent("mousedown", {
@@ -544,7 +508,7 @@ interface Request {
 			})
 		)
 		for (let pixel = 0; pixel < slideBarWidth; pixel += mouseStep) {
-			await new Promise(r => setTimeout(r, 20));
+			await new Promise(r => setTimeout(r, 10 + Math.random() * 5));
 			//moveMouseTo(slideButtonCenter.x + pixel, slideButtonCenter.y - pixel)
 			slideButton.dispatchEvent(
 				new MouseEvent("mousemove", {
@@ -555,7 +519,7 @@ interface Request {
 					clientY: slideButtonCenter.y - Math.log(pixel + 1)
 				})
 			)
-			await new Promise(r => setTimeout(r, 10 + Math.random() * 5));
+			await new Promise(r => setTimeout(r, 40));
 			let trajectoryElement = getTrajectoryElement(
 				pixel,
 				puzzleImageBoundingBox,
@@ -630,36 +594,35 @@ interface Request {
 	}
 
 	async function solvePuzzle(): Promise<void> {
-		for (let i = 0; i < 10; i++) {
-			let sliderButton = document.querySelector(PUZZLE_BUTTON_SELECTOR)
-			let buttonCenter = getElementCenter(sliderButton)
-			let preRequestSlidePixels = 10
-			await mouseDown(buttonCenter.x, buttonCenter.y, sliderButton)
-			await moveMouseTo(buttonCenter.x + preRequestSlidePixels, buttonCenter.y - preRequestSlidePixels, sliderButton)
-			let puzzleSrc = await getImageSource(PUZZLE_PUZZLE_IMAGE_SELECTOR)
-			let pieceSrc = await getImageSource(PUZZLE_PIECE_IMAGE_SELECTOR)
-			console.log("got image sources")
-			let puzzleImg = getBase64StringFromDataURL(puzzleSrc)
-			let pieceImg = getBase64StringFromDataURL(pieceSrc)
-			console.log("converted image sources to b64 string")
-			let solution = await puzzleApiCall(puzzleImg, pieceImg)
-			console.log("got API result: " + solution)
-			let puzzleImageEle = document.querySelector(PUZZLE_PUZZLE_IMAGE_SELECTOR)
-			let distance = computePuzzleSlideDistance(solution, puzzleImageEle)
-			for (let i = 1; i < distance - preRequestSlidePixels; i++) {
-				await moveMouseTo(
-					buttonCenter.x + i + preRequestSlidePixels, 
-					buttonCenter.y - Math.log(i) + Math.random() * 3
-				)
-				await new Promise(r => setTimeout(r, 10));
-			}
-			await mouseUp(buttonCenter.x + distance, buttonCenter.x - distance)
-			await new Promise(r => setTimeout(r, 3000));
-			if (captchaIsPresent())
-				continue
-			else
-				return
+		await new Promise(r => setTimeout(r, 3000));
+		let sliderButton = document.querySelector(PUZZLE_BUTTON_SELECTOR)
+		let buttonCenter = getElementCenter(sliderButton)
+		let preRequestSlidePixels = 10
+		mouseEnterPage()
+		mouseMove(buttonCenter.x, buttonCenter.y)
+		mouseDown(buttonCenter.x, buttonCenter.y, sliderButton)
+		await new Promise(r => setTimeout(r, 133.7));
+		mouseMove(buttonCenter.x + preRequestSlidePixels, buttonCenter.y - preRequestSlidePixels, sliderButton)
+		let puzzleSrc = await getImageSource(PUZZLE_PUZZLE_IMAGE_SELECTOR)
+		let pieceSrc = await getImageSource(PUZZLE_PIECE_IMAGE_SELECTOR)
+		console.log("got image sources")
+		let puzzleImg = getBase64StringFromDataURL(puzzleSrc)
+		let pieceImg = getBase64StringFromDataURL(pieceSrc)
+		console.log("converted image sources to b64 string")
+		let solution = await puzzleApiCall(puzzleImg, pieceImg)
+		console.log("got API result: " + solution)
+		let puzzleImageEle = document.querySelector(PUZZLE_PUZZLE_IMAGE_SELECTOR)
+		let distance = computePuzzleSlideDistance(solution, puzzleImageEle)
+		for (let i = 1; i < distance - preRequestSlidePixels; i++) {
+			mouseMove(
+				buttonCenter.x + i + preRequestSlidePixels, 
+				buttonCenter.y - Math.log(i) + Math.random() * 3
+			)
+			await new Promise(r => setTimeout(r, Math.random() * 5 + 5));
 		}
+		await new Promise(r => setTimeout(r, 133.7));
+		mouseUp(buttonCenter.x + distance, buttonCenter.x - distance)
+		await new Promise(r => setTimeout(r, 3000));
 	}
 
 	async function solveSemanticShapes(): Promise<void> {
@@ -722,7 +685,7 @@ interface Request {
 					break
 			}
 		}
-		await new Promise(r => setTimeout(r, 30000));
+		await new Promise(r => setTimeout(r, 5000));
 		isCurrentSolve = false
 		await solveCaptchaLoop()
 	}
