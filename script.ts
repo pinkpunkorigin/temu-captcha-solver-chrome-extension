@@ -43,6 +43,7 @@ interface Request {
 	const PUZZLE_BUTTON_SELECTOR = "#slide-button"
 	const PUZZLE_PUZZLE_IMAGE_SELECTOR = "#slider > img"
 	const PUZZLE_PIECE_IMAGE_SELECTOR = "#img-button > img"
+	const PUZZLE_SLIDER_WRAPPER = "[class^=slider-wrapper]"
 	const PUZZLE_UNIQUE_IDENTIFIERS = ["#Slider"]
 
 	const SEMANTIC_SHAPES_IFRAME = ".iframe-3eaNR"
@@ -312,16 +313,24 @@ interface Request {
 		console.log("mouse up at " + x + ", " + y)
 	}
 
-	function mouseDown(x: number, y: number, ele?: Element): void {
-		let c: Element
-		if (ele === undefined) {
-			c = CONTAINER
-		} else {
-			c = ele
-		}
-		c.dispatchEvent(
-			new PointerEvent("mousedown", {
-				pointerType: "mouse",
+	function mouseOver(x, y): void {
+		let underMouse = document.elementFromPoint(x, y)
+		underMouse.dispatchEvent(
+			new MouseEvent("mouseover", {
+				cancelable: true,
+				bubbles: true,
+				view: window,
+				clientX: x,
+				clientY: y
+			})
+		)
+		console.log("mouse over at " + x + ", " + y)
+	}
+
+	function mouseDown(x: number, y: number): void {
+		let underMouse = document.elementFromPoint(x, y)
+		underMouse.dispatchEvent(
+			new MouseEvent("mousedown", {
 				cancelable: true,
 				bubbles: true,
 				view: window,
@@ -595,14 +604,27 @@ interface Request {
 
 	async function solvePuzzle(): Promise<void> {
 		await new Promise(r => setTimeout(r, 3000));
+		let sliderWrapper = document.querySelector(PUZZLE_SLIDER_WRAPPER)
 		let sliderButton = document.querySelector(PUZZLE_BUTTON_SELECTOR)
+		let wrapperCenter = getElementCenter(sliderWrapper)
 		let buttonCenter = getElementCenter(sliderButton)
 		let preRequestSlidePixels = 10
 		mouseEnterPage()
-		mouseMove(buttonCenter.x, buttonCenter.y)
-		mouseDown(buttonCenter.x, buttonCenter.y, sliderButton)
+		mouseMove(wrapperCenter.x, wrapperCenter.y)
+		mouseOver(wrapperCenter.x, wrapperCenter.y)
 		await new Promise(r => setTimeout(r, 133.7));
-		mouseMove(buttonCenter.x + preRequestSlidePixels, buttonCenter.y - preRequestSlidePixels, sliderButton)
+		mouseMove(buttonCenter.x, buttonCenter.y)
+		mouseOver(buttonCenter.x, buttonCenter.y)
+		await new Promise(r => setTimeout(r, 133.7));
+		mouseDown(buttonCenter.x, buttonCenter.y)
+		await new Promise(r => setTimeout(r, 133.7));
+		for (let i = 1; i < preRequestSlidePixels; i++) {
+			mouseMove(
+				buttonCenter.x + i, 
+				buttonCenter.y - Math.log(i) + Math.random() * 3
+			)
+			await new Promise(r => setTimeout(r, Math.random() * 5 + 10));
+		}
 		let puzzleSrc = await getImageSource(PUZZLE_PUZZLE_IMAGE_SELECTOR)
 		let pieceSrc = await getImageSource(PUZZLE_PIECE_IMAGE_SELECTOR)
 		console.log("got image sources")
@@ -613,35 +635,33 @@ interface Request {
 		console.log("got API result: " + solution)
 		let puzzleImageEle = document.querySelector(PUZZLE_PUZZLE_IMAGE_SELECTOR)
 		let distance = computePuzzleSlideDistance(solution, puzzleImageEle)
-		for (let i = 1; i < distance - preRequestSlidePixels; i++) {
-			mouseMove(
-				buttonCenter.x + i + preRequestSlidePixels, 
-				buttonCenter.y - Math.log(i) + Math.random() * 3
-			)
-			await new Promise(r => setTimeout(r, Math.random() * 5 + 5));
+		let currentX: number
+		let currentY: number
+		for (let i = 1; i < distance - preRequestSlidePixels; i += Math.random() * 5) {
+			currentX = buttonCenter.x + i + preRequestSlidePixels
+			currentY = buttonCenter.y - Math.log(i) + Math.random() * 3
+			mouseMove(currentX, currentY)
+			mouseOver(currentX, currentY)
+			await new Promise(r => setTimeout(r, Math.random() * 5 + 10));
 		}
+		await new Promise(r => setTimeout(r, 133.7));
+		mouseOver(buttonCenter.x + distance, buttonCenter.x - distance)
 		await new Promise(r => setTimeout(r, 133.7));
 		mouseUp(buttonCenter.x + distance, buttonCenter.x - distance)
 		await new Promise(r => setTimeout(r, 3000));
 	}
 
 	async function solveSemanticShapes(): Promise<void> {
-		for (let i = 0; i < 3; i++) {
-			let src = await getImageSource(SEMANTIC_SHAPES_IMAGE, SEMANTIC_SHAPES_IFRAME)
-			let img = getBase64StringFromDataURL(src)
-			let challenge = getTextContent(SEMANTIC_SHAPES_CHALLENGE_TEXT, SEMANTIC_SHAPES_IFRAME)
-			let res = await semanticShapesApiCall(challenge, img)
-			let ele = document.querySelector("iframe").contentWindow.document.body.querySelector(SEMANTIC_SHAPES_IMAGE)
-			for (const point of res.proportionalPoints) {
-				clickProportional(ele, point.proportionX, point.proportionY)
-				await new Promise(r => setTimeout(r, 1337));
-			}
-			await new Promise(r => setTimeout(r, 3000));
-			if (captchaIsPresent())
-				continue
-			else
-				return
+		let src = await getImageSource(SEMANTIC_SHAPES_IMAGE, SEMANTIC_SHAPES_IFRAME)
+		let img = getBase64StringFromDataURL(src)
+		let challenge = getTextContent(SEMANTIC_SHAPES_CHALLENGE_TEXT, SEMANTIC_SHAPES_IFRAME)
+		let res = await semanticShapesApiCall(challenge, img)
+		let ele = document.querySelector("iframe").contentWindow.document.body.querySelector(SEMANTIC_SHAPES_IMAGE)
+		for (const point of res.proportionalPoints) {
+			clickProportional(ele, point.proportionX, point.proportionY)
+			await new Promise(r => setTimeout(r, 1337));
 		}
+		await new Promise(r => setTimeout(r, 3000));
 	}
 
 	function captchaIsPresent(): boolean {

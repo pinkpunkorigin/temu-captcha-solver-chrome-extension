@@ -67,6 +67,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     var PUZZLE_BUTTON_SELECTOR = "#slide-button";
     var PUZZLE_PUZZLE_IMAGE_SELECTOR = "#slider > img";
     var PUZZLE_PIECE_IMAGE_SELECTOR = "#img-button > img";
+    var PUZZLE_SLIDER_WRAPPER = "[class^=slider-wrapper]";
     var PUZZLE_UNIQUE_IDENTIFIERS = ["#Slider"];
     var SEMANTIC_SHAPES_IFRAME = ".iframe-3eaNR";
     var SEMANTIC_SHAPES_CHALLENGE_ROOT_ELE = "#Picture";
@@ -388,16 +389,20 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         }));
         console.log("mouse up at " + x + ", " + y);
     }
-    function mouseDown(x, y, ele) {
-        var c;
-        if (ele === undefined) {
-            c = CONTAINER;
-        }
-        else {
-            c = ele;
-        }
-        c.dispatchEvent(new PointerEvent("mousedown", {
-            pointerType: "mouse",
+    function mouseOver(x, y) {
+        var underMouse = document.elementFromPoint(x, y);
+        underMouse.dispatchEvent(new MouseEvent("mouseover", {
+            cancelable: true,
+            bubbles: true,
+            view: window,
+            clientX: x,
+            clientY: y
+        }));
+        console.log("mouse over at " + x + ", " + y);
+    }
+    function mouseDown(x, y) {
+        var underMouse = document.elementFromPoint(x, y);
+        underMouse.dispatchEvent(new MouseEvent("mousedown", {
             cancelable: true,
             bubbles: true,
             view: window,
@@ -680,56 +685,85 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
     function solvePuzzle() {
         return __awaiter(this, void 0, void 0, function () {
-            var sliderButton, buttonCenter, preRequestSlidePixels, puzzleSrc, pieceSrc, puzzleImg, pieceImg, solution, puzzleImageEle, distance, i;
+            var sliderWrapper, sliderButton, wrapperCenter, buttonCenter, preRequestSlidePixels, i, puzzleSrc, pieceSrc, puzzleImg, pieceImg, solution, puzzleImageEle, distance, currentX, currentY, i;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0: return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 3000); })];
                     case 1:
                         _a.sent();
+                        sliderWrapper = document.querySelector(PUZZLE_SLIDER_WRAPPER);
                         sliderButton = document.querySelector(PUZZLE_BUTTON_SELECTOR);
+                        wrapperCenter = getElementCenter(sliderWrapper);
                         buttonCenter = getElementCenter(sliderButton);
                         preRequestSlidePixels = 10;
                         mouseEnterPage();
-                        mouseMove(buttonCenter.x, buttonCenter.y);
-                        mouseDown(buttonCenter.x, buttonCenter.y, sliderButton);
+                        mouseMove(wrapperCenter.x, wrapperCenter.y);
+                        mouseOver(wrapperCenter.x, wrapperCenter.y);
                         return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 133.7); })];
                     case 2:
                         _a.sent();
-                        mouseMove(buttonCenter.x + preRequestSlidePixels, buttonCenter.y - preRequestSlidePixels, sliderButton);
-                        return [4 /*yield*/, getImageSource(PUZZLE_PUZZLE_IMAGE_SELECTOR)];
+                        mouseMove(buttonCenter.x, buttonCenter.y);
+                        mouseOver(buttonCenter.x, buttonCenter.y);
+                        return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 133.7); })];
                     case 3:
+                        _a.sent();
+                        mouseDown(buttonCenter.x, buttonCenter.y);
+                        return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 133.7); })];
+                    case 4:
+                        _a.sent();
+                        i = 1;
+                        _a.label = 5;
+                    case 5:
+                        if (!(i < preRequestSlidePixels)) return [3 /*break*/, 8];
+                        mouseMove(buttonCenter.x + i, buttonCenter.y - Math.log(i) + Math.random() * 3);
+                        return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, Math.random() * 5 + 10); })];
+                    case 6:
+                        _a.sent();
+                        _a.label = 7;
+                    case 7:
+                        i++;
+                        return [3 /*break*/, 5];
+                    case 8: return [4 /*yield*/, getImageSource(PUZZLE_PUZZLE_IMAGE_SELECTOR)];
+                    case 9:
                         puzzleSrc = _a.sent();
                         return [4 /*yield*/, getImageSource(PUZZLE_PIECE_IMAGE_SELECTOR)];
-                    case 4:
+                    case 10:
                         pieceSrc = _a.sent();
                         console.log("got image sources");
                         puzzleImg = getBase64StringFromDataURL(puzzleSrc);
                         pieceImg = getBase64StringFromDataURL(pieceSrc);
                         console.log("converted image sources to b64 string");
                         return [4 /*yield*/, puzzleApiCall(puzzleImg, pieceImg)];
-                    case 5:
+                    case 11:
                         solution = _a.sent();
                         console.log("got API result: " + solution);
                         puzzleImageEle = document.querySelector(PUZZLE_PUZZLE_IMAGE_SELECTOR);
                         distance = computePuzzleSlideDistance(solution, puzzleImageEle);
                         i = 1;
-                        _a.label = 6;
-                    case 6:
-                        if (!(i < distance - preRequestSlidePixels)) return [3 /*break*/, 9];
-                        mouseMove(buttonCenter.x + i + preRequestSlidePixels, buttonCenter.y - Math.log(i) + Math.random() * 3);
-                        return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, Math.random() * 5 + 5); })];
-                    case 7:
+                        _a.label = 12;
+                    case 12:
+                        if (!(i < distance - preRequestSlidePixels)) return [3 /*break*/, 15];
+                        currentX = buttonCenter.x + i + preRequestSlidePixels;
+                        currentY = buttonCenter.y - Math.log(i) + Math.random() * 3;
+                        mouseMove(currentX, currentY);
+                        mouseOver(currentX, currentY);
+                        return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, Math.random() * 5 + 10); })];
+                    case 13:
                         _a.sent();
-                        _a.label = 8;
-                    case 8:
-                        i++;
-                        return [3 /*break*/, 6];
-                    case 9: return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 133.7); })];
-                    case 10:
+                        _a.label = 14;
+                    case 14:
+                        i += Math.random() * 5;
+                        return [3 /*break*/, 12];
+                    case 15: return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 133.7); })];
+                    case 16:
+                        _a.sent();
+                        mouseOver(buttonCenter.x + distance, buttonCenter.x - distance);
+                        return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 133.7); })];
+                    case 17:
                         _a.sent();
                         mouseUp(buttonCenter.x + distance, buttonCenter.x - distance);
                         return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 3000); })];
-                    case 11:
+                    case 18:
                         _a.sent();
                         return [2 /*return*/];
                 }
@@ -738,48 +772,35 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
     function solveSemanticShapes() {
         return __awaiter(this, void 0, void 0, function () {
-            var i, src, img, challenge, res, ele, _i, _a, point;
+            var src, img, challenge, res, ele, _i, _a, point;
             return __generator(this, function (_b) {
                 switch (_b.label) {
-                    case 0:
-                        i = 0;
-                        _b.label = 1;
+                    case 0: return [4 /*yield*/, getImageSource(SEMANTIC_SHAPES_IMAGE, SEMANTIC_SHAPES_IFRAME)];
                     case 1:
-                        if (!(i < 3)) return [3 /*break*/, 10];
-                        return [4 /*yield*/, getImageSource(SEMANTIC_SHAPES_IMAGE, SEMANTIC_SHAPES_IFRAME)];
-                    case 2:
                         src = _b.sent();
                         img = getBase64StringFromDataURL(src);
                         challenge = getTextContent(SEMANTIC_SHAPES_CHALLENGE_TEXT, SEMANTIC_SHAPES_IFRAME);
                         return [4 /*yield*/, semanticShapesApiCall(challenge, img)];
-                    case 3:
+                    case 2:
                         res = _b.sent();
                         ele = document.querySelector("iframe").contentWindow.document.body.querySelector(SEMANTIC_SHAPES_IMAGE);
                         _i = 0, _a = res.proportionalPoints;
-                        _b.label = 4;
-                    case 4:
-                        if (!(_i < _a.length)) return [3 /*break*/, 7];
+                        _b.label = 3;
+                    case 3:
+                        if (!(_i < _a.length)) return [3 /*break*/, 6];
                         point = _a[_i];
                         clickProportional(ele, point.proportionX, point.proportionY);
                         return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 1337); })];
+                    case 4:
+                        _b.sent();
+                        _b.label = 5;
                     case 5:
-                        _b.sent();
-                        _b.label = 6;
-                    case 6:
                         _i++;
-                        return [3 /*break*/, 4];
-                    case 7: return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 3000); })];
-                    case 8:
+                        return [3 /*break*/, 3];
+                    case 6: return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 3000); })];
+                    case 7:
                         _b.sent();
-                        if (captchaIsPresent())
-                            return [3 /*break*/, 9];
-                        else
-                            return [2 /*return*/];
-                        _b.label = 9;
-                    case 9:
-                        i++;
-                        return [3 /*break*/, 1];
-                    case 10: return [2 /*return*/];
+                        return [2 /*return*/];
                 }
             });
         });
