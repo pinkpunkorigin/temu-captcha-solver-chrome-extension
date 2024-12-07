@@ -54,8 +54,6 @@ interface Request {
 	const SEMANTIC_SHAPES_UNIQUE_IDENTIFIERS = [SEMANTIC_SHAPES_IMAGE]
 
 	const CAPTCHA_PRESENCE_INDICATORS = [
-		"#Picture",
-		"#captchaImg",
 		"#slide-button",
 		"#Slider",
 		"#slider",
@@ -433,7 +431,7 @@ interface Request {
 		return rect.width
 	}
 
-	async function clickCenterOfElement(element: Element): Promise<void> {
+	function clickCenterOfElement(element: Element): void {
 		let rect = element.getBoundingClientRect()
 		let x = rect.x + (rect.width / 2)
 		let y = rect.y + (rect.height / 2)
@@ -656,18 +654,49 @@ interface Request {
 		let src = await getImageSource(SEMANTIC_SHAPES_IMAGE, SEMANTIC_SHAPES_IFRAME)
 		let img = getBase64StringFromDataURL(src)
 		let challenge = getTextContent(SEMANTIC_SHAPES_CHALLENGE_TEXT, SEMANTIC_SHAPES_IFRAME)
-		let res = await semanticShapesApiCall(challenge, img)
+		let res: SemanticShapesResponse
+		try {
+			res = await semanticShapesApiCall(challenge, img)
+		} catch (err) {
+			console.log("Error calling semantic shapes API. refreshing and retrying")
+			console.error(err)
+			refreshSemanticShapes()
+			solveSemanticShapes()
+		}
 		let ele = document.querySelector("iframe").contentWindow.document.body.querySelector(SEMANTIC_SHAPES_IMAGE)
 		for (const point of res.proportionalPoints) {
 			clickProportional(ele, point.proportionX, point.proportionY)
 			await new Promise(r => setTimeout(r, 1337));
 		}
 		await new Promise(r => setTimeout(r, 3000));
+		let newChallenge = getTextContent(SEMANTIC_SHAPES_CHALLENGE_TEXT, SEMANTIC_SHAPES_IFRAME)
+		let challengeDidNotChange = (challenge === newChallenge)
+		if (challengeDidNotChange) {
+			console.log(
+				"It seems that the shapes challenge did not change after clicking the image."
+				+ "This is probably because the solution lies under tha black loading box, "
+				+ "which means it's impossible to click (thanks temu). Refreshing and retrying."
+			)
+			refreshSemanticShapes()
+			solveSemanticShapes()
+		}
+		await new Promise(r => setTimeout(r, 3000));
+	}
+
+	function refreshSemanticShapes() {
+			let refreshButton = document
+				.querySelector("iframe")
+				.contentWindow
+				.document
+				.querySelector(SEMANTIC_SHAPES_REFRESH_BUTTON)
+			clickCenterOfElement(refreshButton)
+			setTimeout(() => null, 3000)
+
 	}
 
 	function captchaIsPresent(): boolean {
 		for (let i = 0; i < CAPTCHA_PRESENCE_INDICATORS.length; i++) {
-			if (document.querySelector(CAPTCHA_PRESENCE_INDICATORS[i]) !== undefined) {
+			if (document.querySelector(CAPTCHA_PRESENCE_INDICATORS[i])) {
 				console.log("captcha present based on selector: " + CAPTCHA_PRESENCE_INDICATORS[i])
 				return true;
 			}
@@ -680,7 +709,7 @@ interface Request {
 	let isCurrentSolve: boolean
 	async function solveCaptchaLoop() {
 		
-		if (captchaIsPresent){
+		if (captchaIsPresent()){
 			console.log("captcha detected by css selector")
 		} else {
 			console.log("waiting for captcha")
@@ -688,7 +717,14 @@ interface Request {
 			console.log("captcha detected by mutation observer")
 		}
 
-		const captchaType: CaptchaType = await identifyCaptcha()
+		let captchaType: CaptchaType
+		try {
+			captchaType = await identifyCaptcha()
+		} catch (err) {
+			console.log("could not detect captcha type. restarting captcha loop")
+			await solveCaptchaLoop()
+		}
+
 		try {
 			if (await creditsApiCall() <= 0) {
 				console.log("out of credits")
@@ -696,23 +732,32 @@ interface Request {
 				return
 			}
 		} catch (e) {
-			// Catch the error because we dont want to break the solver just because we failed to fetch the credits API
-			console.log("error making check credits api call: " + e)
+			console.log("error making check credits api call")
+			console.error(e)
+			console.log("proceeding to attempt solution anyways")
 		}
-		if (!isCurrentSolve) {
-			isCurrentSolve = true
-			switch (captchaType) {
-				case CaptchaType.PUZZLE:
-					solvePuzzle()
-					break
-				case CaptchaType.ARCED_SLIDE:
-					solveArcedSlide()
-					break
-				case CaptchaType.SEMANTIC_SHAPES:
-					solveSemanticShapes()
-					break
+		
+		try {
+			if (!isCurrentSolve) {
+				isCurrentSolve = true
+				switch (captchaType) {
+					case CaptchaType.PUZZLE:
+						solvePuzzle()
+						break
+					case CaptchaType.ARCED_SLIDE:
+						solveArcedSlide()
+						break
+					case CaptchaType.SEMANTIC_SHAPES:
+						solveSemanticShapes()
+						break
+				}
 			}
+		} catch (err) {
+			console.log("error solving captcha")
+			console.error(err)
+			console.log("restarting captcha loop")
 		}
+
 		await new Promise(r => setTimeout(r, 5000));
 		isCurrentSolve = false
 		await solveCaptchaLoop()

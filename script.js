@@ -76,8 +76,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     var SEMANTIC_SHAPES_REFRESH_BUTTON = ".refresh-27d6x";
     var SEMANTIC_SHAPES_UNIQUE_IDENTIFIERS = [SEMANTIC_SHAPES_IMAGE];
     var CAPTCHA_PRESENCE_INDICATORS = [
-        "#Picture",
-        "#captchaImg",
         "#slide-button",
         "#Slider",
         "#slider",
@@ -488,16 +486,10 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         return rect.width;
     }
     function clickCenterOfElement(element) {
-        return __awaiter(this, void 0, void 0, function () {
-            var rect, x, y;
-            return __generator(this, function (_a) {
-                rect = element.getBoundingClientRect();
-                x = rect.x + (rect.width / 2);
-                y = rect.y + (rect.height / 2);
-                mouseClick(element, x, y);
-                return [2 /*return*/];
-            });
-        });
+        var rect = element.getBoundingClientRect();
+        var x = rect.x + (rect.width / 2);
+        var y = rect.y + (rect.height / 2);
+        mouseClick(element, x, y);
     }
     function clickProportional(element, proportionX, proportionY) {
         var boundingBox = element.getBoundingClientRect();
@@ -773,7 +765,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
     function solveSemanticShapes() {
         return __awaiter(this, void 0, void 0, function () {
-            var src, img, challenge, res, ele, _i, _a, point;
+            var src, img, challenge, res, err_1, ele, _i, _a, point, newChallenge, challengeDidNotChange;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0: return [4 /*yield*/, getImageSource(SEMANTIC_SHAPES_IMAGE, SEMANTIC_SHAPES_IFRAME)];
@@ -781,34 +773,67 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                         src = _b.sent();
                         img = getBase64StringFromDataURL(src);
                         challenge = getTextContent(SEMANTIC_SHAPES_CHALLENGE_TEXT, SEMANTIC_SHAPES_IFRAME);
-                        return [4 /*yield*/, semanticShapesApiCall(challenge, img)];
+                        _b.label = 2;
                     case 2:
+                        _b.trys.push([2, 4, , 5]);
+                        return [4 /*yield*/, semanticShapesApiCall(challenge, img)];
+                    case 3:
                         res = _b.sent();
+                        return [3 /*break*/, 5];
+                    case 4:
+                        err_1 = _b.sent();
+                        console.log("Error calling semantic shapes API. refreshing and retrying");
+                        console.error(err_1);
+                        refreshSemanticShapes();
+                        solveSemanticShapes();
+                        return [3 /*break*/, 5];
+                    case 5:
                         ele = document.querySelector("iframe").contentWindow.document.body.querySelector(SEMANTIC_SHAPES_IMAGE);
                         _i = 0, _a = res.proportionalPoints;
-                        _b.label = 3;
-                    case 3:
-                        if (!(_i < _a.length)) return [3 /*break*/, 6];
+                        _b.label = 6;
+                    case 6:
+                        if (!(_i < _a.length)) return [3 /*break*/, 9];
                         point = _a[_i];
                         clickProportional(ele, point.proportionX, point.proportionY);
                         return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 1337); })];
-                    case 4:
-                        _b.sent();
-                        _b.label = 5;
-                    case 5:
-                        _i++;
-                        return [3 /*break*/, 3];
-                    case 6: return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 3000); })];
                     case 7:
+                        _b.sent();
+                        _b.label = 8;
+                    case 8:
+                        _i++;
+                        return [3 /*break*/, 6];
+                    case 9: return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 3000); })];
+                    case 10:
+                        _b.sent();
+                        newChallenge = getTextContent(SEMANTIC_SHAPES_CHALLENGE_TEXT, SEMANTIC_SHAPES_IFRAME);
+                        challengeDidNotChange = (challenge === newChallenge);
+                        if (challengeDidNotChange) {
+                            console.log("It seems that the shapes challenge did not change after clicking the image."
+                                + "This is probably because the solution lies under tha black loading box, "
+                                + "which means it's impossible to click (thanks temu). Refreshing and retrying.");
+                            refreshSemanticShapes();
+                            solveSemanticShapes();
+                        }
+                        return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 3000); })];
+                    case 11:
                         _b.sent();
                         return [2 /*return*/];
                 }
             });
         });
     }
+    function refreshSemanticShapes() {
+        var refreshButton = document
+            .querySelector("iframe")
+            .contentWindow
+            .document
+            .querySelector(SEMANTIC_SHAPES_REFRESH_BUTTON);
+        clickCenterOfElement(refreshButton);
+        setTimeout(function () { return null; }, 3000);
+    }
     function captchaIsPresent() {
         for (var i = 0; i < CAPTCHA_PRESENCE_INDICATORS.length; i++) {
-            if (document.querySelector(CAPTCHA_PRESENCE_INDICATORS[i]) !== undefined) {
+            if (document.querySelector(CAPTCHA_PRESENCE_INDICATORS[i])) {
                 console.log("captcha present based on selector: " + CAPTCHA_PRESENCE_INDICATORS[i]);
                 return true;
             }
@@ -819,11 +844,11 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     var isCurrentSolve;
     function solveCaptchaLoop() {
         return __awaiter(this, void 0, void 0, function () {
-            var _, captchaType, e_1;
+            var _, captchaType, err_2, e_1;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        if (!captchaIsPresent) return [3 /*break*/, 1];
+                        if (!captchaIsPresent()) return [3 /*break*/, 1];
                         console.log("captcha detected by css selector");
                         return [3 /*break*/, 3];
                     case 1:
@@ -833,46 +858,63 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                         _ = _a.sent();
                         console.log("captcha detected by mutation observer");
                         _a.label = 3;
-                    case 3: return [4 /*yield*/, identifyCaptcha()];
+                    case 3:
+                        _a.trys.push([3, 5, , 7]);
+                        return [4 /*yield*/, identifyCaptcha()];
                     case 4:
                         captchaType = _a.sent();
-                        _a.label = 5;
+                        return [3 /*break*/, 7];
                     case 5:
-                        _a.trys.push([5, 7, , 8]);
-                        return [4 /*yield*/, creditsApiCall()];
+                        err_2 = _a.sent();
+                        console.log("could not detect captcha type. restarting captcha loop");
+                        return [4 /*yield*/, solveCaptchaLoop()];
                     case 6:
+                        _a.sent();
+                        return [3 /*break*/, 7];
+                    case 7:
+                        _a.trys.push([7, 9, , 10]);
+                        return [4 /*yield*/, creditsApiCall()];
+                    case 8:
                         if ((_a.sent()) <= 0) {
                             console.log("out of credits");
                             alert("Out of SadCaptcha credits. Please boost your balance on sadcaptcha.com/dashboard.");
                             return [2 /*return*/];
                         }
-                        return [3 /*break*/, 8];
-                    case 7:
+                        return [3 /*break*/, 10];
+                    case 9:
                         e_1 = _a.sent();
-                        // Catch the error because we dont want to break the solver just because we failed to fetch the credits API
-                        console.log("error making check credits api call: " + e_1);
-                        return [3 /*break*/, 8];
-                    case 8:
-                        if (!isCurrentSolve) {
-                            isCurrentSolve = true;
-                            switch (captchaType) {
-                                case CaptchaType.PUZZLE:
-                                    solvePuzzle();
-                                    break;
-                                case CaptchaType.ARCED_SLIDE:
-                                    solveArcedSlide();
-                                    break;
-                                case CaptchaType.SEMANTIC_SHAPES:
-                                    solveSemanticShapes();
-                                    break;
+                        console.log("error making check credits api call");
+                        console.error(e_1);
+                        console.log("proceeding to attempt solution anyways");
+                        return [3 /*break*/, 10];
+                    case 10:
+                        try {
+                            if (!isCurrentSolve) {
+                                isCurrentSolve = true;
+                                switch (captchaType) {
+                                    case CaptchaType.PUZZLE:
+                                        solvePuzzle();
+                                        break;
+                                    case CaptchaType.ARCED_SLIDE:
+                                        solveArcedSlide();
+                                        break;
+                                    case CaptchaType.SEMANTIC_SHAPES:
+                                        solveSemanticShapes();
+                                        break;
+                                }
                             }
                         }
+                        catch (err) {
+                            console.log("error solving captcha");
+                            console.error(err);
+                            console.log("restarting captcha loop");
+                        }
                         return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 5000); })];
-                    case 9:
+                    case 11:
                         _a.sent();
                         isCurrentSolve = false;
                         return [4 /*yield*/, solveCaptchaLoop()];
-                    case 10:
+                    case 12:
                         _a.sent();
                         return [2 /*return*/];
                 }
