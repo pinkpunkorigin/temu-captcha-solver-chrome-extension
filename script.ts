@@ -58,7 +58,8 @@ interface Request {
 		"#captchaImg",
 		"#slide-button",
 		"#Slider",
-		"#slider"
+		"#slider",
+		"iframe"
 	]
 
 	type Point = {
@@ -678,8 +679,15 @@ interface Request {
 
 	let isCurrentSolve: boolean
 	async function solveCaptchaLoop() {
-		const _: Element = await findFirstElementToAppear(CAPTCHA_PRESENCE_INDICATORS)
-		console.log("Captcha detected")
+		
+		if (captchaIsPresent){
+			console.log("captcha detected by css selector")
+		} else {
+			console.log("waiting for captcha")
+			const _: Element = await findFirstElementToAppear(CAPTCHA_PRESENCE_INDICATORS)
+			console.log("captcha detected by mutation observer")
+		}
+
 		const captchaType: CaptchaType = await identifyCaptcha()
 		try {
 			if (await creditsApiCall() <= 0) {

@@ -80,7 +80,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         "#captchaImg",
         "#slide-button",
         "#Slider",
-        "#slider"
+        "#slider",
+        "iframe"
     ];
     var CaptchaType;
     (function (CaptchaType) {
@@ -821,30 +822,37 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
             var _, captchaType, e_1;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, findFirstElementToAppear(CAPTCHA_PRESENCE_INDICATORS)];
+                    case 0:
+                        if (!captchaIsPresent) return [3 /*break*/, 1];
+                        console.log("captcha detected by css selector");
+                        return [3 /*break*/, 3];
                     case 1:
-                        _ = _a.sent();
-                        console.log("Captcha detected");
-                        return [4 /*yield*/, identifyCaptcha()];
+                        console.log("waiting for captcha");
+                        return [4 /*yield*/, findFirstElementToAppear(CAPTCHA_PRESENCE_INDICATORS)];
                     case 2:
-                        captchaType = _a.sent();
+                        _ = _a.sent();
+                        console.log("captcha detected by mutation observer");
                         _a.label = 3;
-                    case 3:
-                        _a.trys.push([3, 5, , 6]);
-                        return [4 /*yield*/, creditsApiCall()];
+                    case 3: return [4 /*yield*/, identifyCaptcha()];
                     case 4:
+                        captchaType = _a.sent();
+                        _a.label = 5;
+                    case 5:
+                        _a.trys.push([5, 7, , 8]);
+                        return [4 /*yield*/, creditsApiCall()];
+                    case 6:
                         if ((_a.sent()) <= 0) {
                             console.log("out of credits");
                             alert("Out of SadCaptcha credits. Please boost your balance on sadcaptcha.com/dashboard.");
                             return [2 /*return*/];
                         }
-                        return [3 /*break*/, 6];
-                    case 5:
+                        return [3 /*break*/, 8];
+                    case 7:
                         e_1 = _a.sent();
                         // Catch the error because we dont want to break the solver just because we failed to fetch the credits API
                         console.log("error making check credits api call: " + e_1);
-                        return [3 /*break*/, 6];
-                    case 6:
+                        return [3 /*break*/, 8];
+                    case 8:
                         if (!isCurrentSolve) {
                             isCurrentSolve = true;
                             switch (captchaType) {
@@ -860,11 +868,11 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                             }
                         }
                         return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 5000); })];
-                    case 7:
+                    case 9:
                         _a.sent();
                         isCurrentSolve = false;
                         return [4 /*yield*/, solveCaptchaLoop()];
-                    case 8:
+                    case 10:
                         _a.sent();
                         return [2 /*return*/];
                 }
