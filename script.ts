@@ -28,6 +28,7 @@ interface Request {
 
 	let creditsUrl = "https://www.sadcaptcha.com/api/v1/license/credits?licenseKey="
 	let arcedSlideUrl = "https://www.sadcaptcha.com/api/v1/temu-arced-slide?licenseKey="
+	let threeByThreeUrl = "https://www.sadcaptcha.com/api/v1/temu-three-by-three?licenseKey="
 	let puzzleUrl = "https://www.sadcaptcha.com/api/v1/puzzle?licenseKey="
 	let semanticShapesUrl = "https://www.sadcaptcha.com/api/v1/semantic-shapes?licenseKey="
 
@@ -53,11 +54,17 @@ interface Request {
 	const SEMANTIC_SHAPES_REFRESH_BUTTON = ".refresh-27d6x"
 	const SEMANTIC_SHAPES_UNIQUE_IDENTIFIERS = [SEMANTIC_SHAPES_IMAGE]
 
+	const THREE_BY_THREE_IMAGE = "img.loaded"
+	const THREE_BY_THREE_TEXT = ".verifyDialog div[role=dialog]"
+	const THREE_BY_THREE_CONFIRM_BUTTON = ".verifyDialog div[role=button]:has(span)"
+	const THREE_BY_THREE_UNIQUE_IDENTIFIERS = ["#imageSemantics img.loaded"]
+
 	const CAPTCHA_PRESENCE_INDICATORS = [
 		"#slide-button",
 		"#Slider",
 		"#slider",
-		"iframe"
+		"iframe",
+		"#imageSemantics img.loaded"
 	]
 
 	type Point = {
@@ -99,10 +106,35 @@ interface Request {
 		pixels_from_slider_origin: number
 	}
 
+	/*
+    * Contains data bout the 3x3 captcha.
+    * This includes the names of the objects as a list
+    * in the order they are meant to be selected. It
+    * also includes the images as a list of base64 strings
+    * where  indexes 0-2 are the top row, 3-5 are the
+    * middle, and 6-8 are the bottom row.
+	*/
+	type ThreeByThreeCaptchaRequest = {
+		objects_of_interest: Array<string>
+		images: Array<string>
+	}
+
+	/*
+    * The indices of correct inages to click, in the order they must be clicked.
+    * Where the indeces correspond to the following panels:
+    *     0 1 2
+    *     3 4 5
+    *     6 7 8
+	*/
+	type ThreeByThreeCaptchaResponse = {
+		solution_indices: Array<number>
+	}
+
 	enum CaptchaType {
 		PUZZLE,
 		ARCED_SLIDE,
-		SEMANTIC_SHAPES
+		SEMANTIC_SHAPES,
+		THREE_BY_THREE
 	}
 
 	function findFirstElementToAppear(selectors: Array<string>): Promise<Element> {
@@ -209,6 +241,13 @@ interface Request {
 		return resp
 	}
 
+	async function threeByThreeApiCall(requestBody: ThreeByThreeCaptchaRequest): Promise<ThreeByThreeCaptchaResponse> {
+		let resp = await apiCall(threeByThreeUrl, requestBody)
+		console.dir("got resp to 3x3 api call: ")
+		console.dir(resp)
+		return resp.json()
+	}
+
 	async function arcedSlideApiCall(requestBody: ArcedSlideCaptchaRequest): Promise<number> {
 		let resp = await apiCall(arcedSlideUrl, requestBody)
 		let pixelsFromSliderOrigin = (await resp.json()).pixelsFromSliderOrigin
@@ -267,6 +306,9 @@ interface Request {
 			} else if (anySelectorInListPresent(SEMANTIC_SHAPES_UNIQUE_IDENTIFIERS)) {
 				console.log("semantic shapes detected")
 				return CaptchaType.SEMANTIC_SHAPES
+			} else if (anySelectorInListPresent(THREE_BY_THREE_UNIQUE_IDENTIFIERS)) {
+				console.log("3x3 detected")
+				return CaptchaType.THREE_BY_THREE
 			} else {
 				await new Promise(r => setTimeout(r, 1000));
 			}
@@ -683,6 +725,39 @@ interface Request {
 		await new Promise(r => setTimeout(r, 3000));
 	}
 
+	async function solveThreeByThree() {
+		let imageElements = document.querySelectorAll(THREE_BY_THREE_IMAGE)
+		let imageB64 = []
+		imageElements.forEach(ele => {
+			imageB64.push(getBase64StringFromDataURL(ele.getAttribute("src")))
+		})
+		let challengeText = getTextContent(THREE_BY_THREE_TEXT)
+		let objects = parseThreeByThreeObjectsOfInterest(challengeText)
+		let request: ThreeByThreeCaptchaRequest = {
+			objects_of_interest: objects,
+			images: imageB64
+		}
+		let resp = await threeByThreeApiCall(request)
+		resp.solution_indices.forEach(i => {
+			let ele = document.querySelector(`img[src*="${imageB64[i]}"]`)	
+			clickProportional(ele, 0.69, 0.69)
+			setTimeout(() => null, 1337)
+		})
+		clickProportional(document.querySelector(THREE_BY_THREE_CONFIRM_BUTTON), 0.69, 0.420)
+	}
+
+	/*
+    * Get the list of objects to select from Temu 3x3 captcha
+    * ex:
+    *     input: 'Click on the corresponding images in the following order: 'television','strawberry','peach'
+    *     output: ['television', 'strawberry', 'peach']
+	*/
+	function parseThreeByThreeObjectsOfInterest(challengeText: string): Array<string> {
+		let objects = challengeText.match(/(?<=')[\w\s]+?(?=')/g)
+		console.log(`input text: ${challengeText}\nobjects of interest: ${objects}`) 
+		return objects
+	}
+
 	function refreshSemanticShapes() {
 			let refreshButton = document
 				.querySelector("iframe")
@@ -749,6 +824,9 @@ interface Request {
 						break
 					case CaptchaType.SEMANTIC_SHAPES:
 						solveSemanticShapes()
+						break
+					case CaptchaType.THREE_BY_THREE:
+						solveThreeByThree()
 						break
 				}
 			}
