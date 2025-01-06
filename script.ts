@@ -514,6 +514,7 @@ interface Request {
 				currentX - i,
 				startY + Math.random() * 5
 			)
+			console.debug("current x: " + currentX)
 			await new Promise(r => setTimeout(r, 10 + Math.random() * 5));
 		}
 		await new Promise(r => setTimeout(r, 300));
@@ -768,64 +769,64 @@ interface Request {
 	}
 
 
-	let isCurrentSolve: boolean
+	let isCurrentSolve: boolean = false
 	async function solveCaptchaLoop() {
-		
-		if (captchaIsPresent()){
-			console.log("captcha detected by css selector")
-		} else {
-			console.log("waiting for captcha")
-			const _: Element = await findFirstElementToAppear(CAPTCHA_PRESENCE_INDICATORS)
-			console.log("captcha detected by mutation observer")
-		}
-
-		let captchaType: CaptchaType
-		try {
-			captchaType = await identifyCaptcha()
-		} catch (err) {
-			console.log("could not detect captcha type. restarting captcha loop")
-			await solveCaptchaLoop()
-		}
-
-		try {
-			if (await creditsApiCall() <= 0) {
-				console.log("out of credits")
-				alert("Out of SadCaptcha credits. Please boost your balance on sadcaptcha.com/dashboard.")
-				return
+		if (!isCurrentSolve) {
+			if (captchaIsPresent()){
+				console.log("captcha detected by css selector")
+			} else {
+				console.log("waiting for captcha")
+				const _: Element = await findFirstElementToAppear(CAPTCHA_PRESENCE_INDICATORS)
+				console.log("captcha detected by mutation observer")
 			}
-		} catch (e) {
-			console.log("error making check credits api call")
-			console.error(e)
-			console.log("proceeding to attempt solution anyways")
-		}
+
+			isCurrentSolve = true
+			let captchaType: CaptchaType
+			try {
+				captchaType = await identifyCaptcha()
+			} catch (err) {
+				console.log("could not detect captcha type. restarting captcha loop")
+				isCurrentSolve = false
+				await solveCaptchaLoop()
+			}
+
+			try {
+				if (await creditsApiCall() <= 0) {
+					console.log("out of credits")
+					alert("Out of SadCaptcha credits. Please boost your balance on sadcaptcha.com/dashboard.")
+					return
+				}
+			} catch (e) {
+				console.log("error making check credits api call")
+				console.error(e)
+				console.log("proceeding to attempt solution anyways")
+			}
 		
-		try {
-			if (!isCurrentSolve) {
-				isCurrentSolve = true
+			try {
 				switch (captchaType) {
 					case CaptchaType.PUZZLE:
-						solvePuzzle()
+						await solvePuzzle()
 						break
 					case CaptchaType.ARCED_SLIDE:
-						solveArcedSlide()
+						await solveArcedSlide()
 						break
 					case CaptchaType.SEMANTIC_SHAPES:
-						solveSemanticShapes()
+						await solveSemanticShapes()
 						break
 					case CaptchaType.THREE_BY_THREE:
-						solveThreeByThree()
+						await solveThreeByThree()
 						break
 				}
+			} catch (err) {
+				console.log("error solving captcha")
+				console.error(err)
+				console.log("restarting captcha loop")
+			} finally {
+				isCurrentSolve = false
+				await new Promise(r => setTimeout(r, 5000));
+				await solveCaptchaLoop()
 			}
-		} catch (err) {
-			console.log("error solving captcha")
-			console.error(err)
-			console.log("restarting captcha loop")
 		}
-
-		await new Promise(r => setTimeout(r, 5000));
-		isCurrentSolve = false
-		await solveCaptchaLoop()
 	}
 
 	solveCaptchaLoop()

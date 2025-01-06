@@ -549,6 +549,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                     case 6:
                         if (!(i < solutionDistanceBackwards)) return [3 /*break*/, 9];
                         mouseMove(currentX - i, startY + Math.random() * 5);
+                        console.debug("current x: " + currentX);
                         return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 10 + Math.random() * 5); })];
                     case 7:
                         _a.sent();
@@ -886,13 +887,14 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         console.log("captcha not present");
         return false;
     }
-    var isCurrentSolve;
+    var isCurrentSolve = false;
     function solveCaptchaLoop() {
         return __awaiter(this, void 0, void 0, function () {
-            var _, captchaType, err_2, e_1;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
+            var _, captchaType, err_2, e_1, _a, err_3;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
                     case 0:
+                        if (!!isCurrentSolve) return [3 /*break*/, 25];
                         if (!captchaIsPresent()) return [3 /*break*/, 1];
                         console.log("captcha detected by css selector");
                         return [3 /*break*/, 3];
@@ -900,71 +902,86 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                         console.log("waiting for captcha");
                         return [4 /*yield*/, findFirstElementToAppear(CAPTCHA_PRESENCE_INDICATORS)];
                     case 2:
-                        _ = _a.sent();
+                        _ = _b.sent();
                         console.log("captcha detected by mutation observer");
-                        _a.label = 3;
+                        _b.label = 3;
                     case 3:
-                        _a.trys.push([3, 5, , 7]);
-                        return [4 /*yield*/, identifyCaptcha()];
+                        isCurrentSolve = true;
+                        captchaType = void 0;
+                        _b.label = 4;
                     case 4:
-                        captchaType = _a.sent();
-                        return [3 /*break*/, 7];
+                        _b.trys.push([4, 6, , 8]);
+                        return [4 /*yield*/, identifyCaptcha()];
                     case 5:
-                        err_2 = _a.sent();
-                        console.log("could not detect captcha type. restarting captcha loop");
-                        return [4 /*yield*/, solveCaptchaLoop()];
+                        captchaType = _b.sent();
+                        return [3 /*break*/, 8];
                     case 6:
-                        _a.sent();
-                        return [3 /*break*/, 7];
+                        err_2 = _b.sent();
+                        console.log("could not detect captcha type. restarting captcha loop");
+                        isCurrentSolve = false;
+                        return [4 /*yield*/, solveCaptchaLoop()];
                     case 7:
-                        _a.trys.push([7, 9, , 10]);
-                        return [4 /*yield*/, creditsApiCall()];
+                        _b.sent();
+                        return [3 /*break*/, 8];
                     case 8:
-                        if ((_a.sent()) <= 0) {
+                        _b.trys.push([8, 10, , 11]);
+                        return [4 /*yield*/, creditsApiCall()];
+                    case 9:
+                        if ((_b.sent()) <= 0) {
                             console.log("out of credits");
                             alert("Out of SadCaptcha credits. Please boost your balance on sadcaptcha.com/dashboard.");
                             return [2 /*return*/];
                         }
-                        return [3 /*break*/, 10];
-                    case 9:
-                        e_1 = _a.sent();
+                        return [3 /*break*/, 11];
+                    case 10:
+                        e_1 = _b.sent();
                         console.log("error making check credits api call");
                         console.error(e_1);
                         console.log("proceeding to attempt solution anyways");
-                        return [3 /*break*/, 10];
-                    case 10:
-                        try {
-                            if (!isCurrentSolve) {
-                                isCurrentSolve = true;
-                                switch (captchaType) {
-                                    case CaptchaType.PUZZLE:
-                                        solvePuzzle();
-                                        break;
-                                    case CaptchaType.ARCED_SLIDE:
-                                        solveArcedSlide();
-                                        break;
-                                    case CaptchaType.SEMANTIC_SHAPES:
-                                        solveSemanticShapes();
-                                        break;
-                                    case CaptchaType.THREE_BY_THREE:
-                                        solveThreeByThree();
-                                        break;
-                                }
-                            }
-                        }
-                        catch (err) {
-                            console.log("error solving captcha");
-                            console.error(err);
-                            console.log("restarting captcha loop");
-                        }
-                        return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 5000); })];
+                        return [3 /*break*/, 11];
                     case 11:
-                        _a.sent();
+                        _b.trys.push([11, 21, 22, 25]);
+                        _a = captchaType;
+                        switch (_a) {
+                            case CaptchaType.PUZZLE: return [3 /*break*/, 12];
+                            case CaptchaType.ARCED_SLIDE: return [3 /*break*/, 14];
+                            case CaptchaType.SEMANTIC_SHAPES: return [3 /*break*/, 16];
+                            case CaptchaType.THREE_BY_THREE: return [3 /*break*/, 18];
+                        }
+                        return [3 /*break*/, 20];
+                    case 12: return [4 /*yield*/, solvePuzzle()];
+                    case 13:
+                        _b.sent();
+                        return [3 /*break*/, 20];
+                    case 14: return [4 /*yield*/, solveArcedSlide()];
+                    case 15:
+                        _b.sent();
+                        return [3 /*break*/, 20];
+                    case 16: return [4 /*yield*/, solveSemanticShapes()];
+                    case 17:
+                        _b.sent();
+                        return [3 /*break*/, 20];
+                    case 18: return [4 /*yield*/, solveThreeByThree()];
+                    case 19:
+                        _b.sent();
+                        return [3 /*break*/, 20];
+                    case 20: return [3 /*break*/, 25];
+                    case 21:
+                        err_3 = _b.sent();
+                        console.log("error solving captcha");
+                        console.error(err_3);
+                        console.log("restarting captcha loop");
+                        return [3 /*break*/, 25];
+                    case 22:
                         isCurrentSolve = false;
+                        return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 5000); })];
+                    case 23:
+                        _b.sent();
                         return [4 /*yield*/, solveCaptchaLoop()];
-                    case 12:
-                        _a.sent();
-                        return [2 /*return*/];
+                    case 24:
+                        _b.sent();
+                        return [7 /*endfinally*/];
+                    case 25: return [2 /*return*/];
                 }
             });
         });
