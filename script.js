@@ -55,6 +55,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     });
     var creditsUrl = "https://www.sadcaptcha.com/api/v1/license/credits?licenseKey=";
     var arcedSlideUrl = "https://www.sadcaptcha.com/api/v1/temu-arced-slide?licenseKey=";
+    var threeByThreeUrl = "https://www.sadcaptcha.com/api/v1/temu-three-by-three?licenseKey=";
     var puzzleUrl = "https://www.sadcaptcha.com/api/v1/puzzle?licenseKey=";
     var semanticShapesUrl = "https://www.sadcaptcha.com/api/v1/semantic-shapes?licenseKey=";
     var corsProxy = "https://corsproxy.io/?";
@@ -75,17 +76,23 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     var SEMANTIC_SHAPES_IMAGE = "#captchaImg";
     var SEMANTIC_SHAPES_REFRESH_BUTTON = ".refresh-27d6x";
     var SEMANTIC_SHAPES_UNIQUE_IDENTIFIERS = [SEMANTIC_SHAPES_IMAGE];
+    var THREE_BY_THREE_IMAGE = "img.loaded";
+    var THREE_BY_THREE_TEXT = ".verifyDialog div[role=dialog]";
+    var THREE_BY_THREE_CONFIRM_BUTTON = ".verifyDialog div[role=button]:has(span)";
+    var THREE_BY_THREE_UNIQUE_IDENTIFIERS = ["#imageSemantics img.loaded"];
     var CAPTCHA_PRESENCE_INDICATORS = [
         "#slide-button",
         "#Slider",
         "#slider",
-        "iframe"
+        "iframe",
+        "#imageSemantics img.loaded"
     ];
     var CaptchaType;
     (function (CaptchaType) {
         CaptchaType[CaptchaType["PUZZLE"] = 0] = "PUZZLE";
         CaptchaType[CaptchaType["ARCED_SLIDE"] = 1] = "ARCED_SLIDE";
         CaptchaType[CaptchaType["SEMANTIC_SHAPES"] = 2] = "SEMANTIC_SHAPES";
+        CaptchaType[CaptchaType["THREE_BY_THREE"] = 3] = "THREE_BY_THREE";
     })(CaptchaType || (CaptchaType = {}));
     function findFirstElementToAppear(selectors) {
         return new Promise(function (resolve) {
@@ -226,6 +233,21 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
             });
         });
     }
+    function threeByThreeApiCall(requestBody) {
+        return __awaiter(this, void 0, void 0, function () {
+            var resp;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, apiCall(threeByThreeUrl, requestBody)];
+                    case 1:
+                        resp = _a.sent();
+                        console.dir("got resp to 3x3 api call: ");
+                        console.dir(resp);
+                        return [2 /*return*/, resp.json()];
+                }
+            });
+        });
+    }
     function arcedSlideApiCall(requestBody) {
         return __awaiter(this, void 0, void 0, function () {
             var resp, pixelsFromSliderOrigin;
@@ -312,7 +334,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                         i = 0;
                         _a.label = 1;
                     case 1:
-                        if (!(i < 30)) return [3 /*break*/, 7];
+                        if (!(i < 30)) return [3 /*break*/, 8];
                         if (!anySelectorInListPresent(ARCED_SLIDE_UNIQUE_IDENTIFIERS)) return [3 /*break*/, 2];
                         console.log("arced slide detected");
                         return [2 /*return*/, CaptchaType.ARCED_SLIDE];
@@ -324,14 +346,18 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                         if (!anySelectorInListPresent(SEMANTIC_SHAPES_UNIQUE_IDENTIFIERS)) return [3 /*break*/, 4];
                         console.log("semantic shapes detected");
                         return [2 /*return*/, CaptchaType.SEMANTIC_SHAPES];
-                    case 4: return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 1000); })];
-                    case 5:
-                        _a.sent();
-                        _a.label = 6;
+                    case 4:
+                        if (!anySelectorInListPresent(THREE_BY_THREE_UNIQUE_IDENTIFIERS)) return [3 /*break*/, 5];
+                        console.log("3x3 detected");
+                        return [2 /*return*/, CaptchaType.THREE_BY_THREE];
+                    case 5: return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 1000); })];
                     case 6:
+                        _a.sent();
+                        _a.label = 7;
+                    case 7:
                         i++;
                         return [3 /*break*/, 1];
-                    case 7: throw new Error("Could not identify CaptchaType");
+                    case 8: throw new Error("Could not identify CaptchaType");
                 }
             });
         });
@@ -355,29 +381,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         var img = dataUrl.replace('data:', '').replace(/^.+,/, '');
         console.log("got b64 string from data URL");
         return img;
-    }
-    function fetchImageBase64(imageSource) {
-        return __awaiter(this, void 0, void 0, function () {
-            var res, img, reader;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, fetch(corsProxy + imageSource)];
-                    case 1:
-                        res = _a.sent();
-                        return [4 /*yield*/, res.blob()];
-                    case 2:
-                        img = _a.sent();
-                        reader = new FileReader();
-                        reader.readAsDataURL(img);
-                        return [2 /*return*/, new Promise(function (resolve) {
-                                reader.onloadend = function () {
-                                    console.log("wrote b64 image src to file then back to string");
-                                    resolve(getBase64StringFromDataURL(reader.result));
-                                };
-                            })];
-                }
-            });
-        });
     }
     function mouseUp(x, y) {
         CONTAINER.dispatchEvent(new MouseEvent("mouseup", {
@@ -822,6 +825,48 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
             });
         });
     }
+    function solveThreeByThree() {
+        return __awaiter(this, void 0, void 0, function () {
+            var imageElements, imageB64, challengeText, objects, request, resp;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        imageElements = document.querySelectorAll(THREE_BY_THREE_IMAGE);
+                        imageB64 = [];
+                        imageElements.forEach(function (ele) {
+                            imageB64.push(getBase64StringFromDataURL(ele.getAttribute("src")));
+                        });
+                        challengeText = getTextContent(THREE_BY_THREE_TEXT);
+                        objects = parseThreeByThreeObjectsOfInterest(challengeText);
+                        request = {
+                            objects_of_interest: objects,
+                            images: imageB64
+                        };
+                        return [4 /*yield*/, threeByThreeApiCall(request)];
+                    case 1:
+                        resp = _a.sent();
+                        resp.solution_indices.forEach(function (i) {
+                            var ele = document.querySelector("img[src*=\"".concat(imageB64[i], "\"]"));
+                            clickProportional(ele, 0.69, 0.69);
+                            setTimeout(function () { return null; }, 1337);
+                        });
+                        clickProportional(document.querySelector(THREE_BY_THREE_CONFIRM_BUTTON), 0.69, 0.420);
+                        return [2 /*return*/];
+                }
+            });
+        });
+    }
+    /*
+    * Get the list of objects to select from Temu 3x3 captcha
+    * ex:
+    *     input: 'Click on the corresponding images in the following order: 'television','strawberry','peach'
+    *     output: ['television', 'strawberry', 'peach']
+    */
+    function parseThreeByThreeObjectsOfInterest(challengeText) {
+        var objects = challengeText.match(/(?<=')[\w\s]+?(?=')/g);
+        console.log("input text: ".concat(challengeText, "\nobjects of interest: ").concat(objects));
+        return objects;
+    }
     function refreshSemanticShapes() {
         var refreshButton = document
             .querySelector("iframe")
@@ -900,6 +945,9 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                                         break;
                                     case CaptchaType.SEMANTIC_SHAPES:
                                         solveSemanticShapes();
+                                        break;
+                                    case CaptchaType.THREE_BY_THREE:
+                                        solveThreeByThree();
                                         break;
                                 }
                             }

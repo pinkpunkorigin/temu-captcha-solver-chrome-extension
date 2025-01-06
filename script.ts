@@ -329,19 +329,6 @@ interface Request {
 		return img
 	}
 
-	async function fetchImageBase64(imageSource: string): Promise<string> {
-		let res = await fetch(corsProxy + imageSource)
-		let img = await res.blob()
-		let reader = new FileReader()
-		reader.readAsDataURL(img)
-		return new Promise(resolve => {
-			reader.onloadend = () => {
-				console.log("wrote b64 image src to file then back to string")
-				resolve(getBase64StringFromDataURL(reader.result as string))
-			}
-		})
-	}
-
 	function mouseUp(x: number, y: number): void {
 		CONTAINER.dispatchEvent(
 			new MouseEvent("mouseup", {
