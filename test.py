@@ -1,11 +1,18 @@
+from genericpath import isdir
+import os
+import shutil
 from playwright_stealth import stealth_sync, StealthConfig
 from playwright.sync_api import sync_playwright, Playwright
 
 path_to_extension = "./"
 user_data_dir = "/tmp/test-user-data-dir"
 
+if os.path.isdir(user_data_dir):
+    shutil.rmtree(user_data_dir)
+
 proxy = {
-    "server": "185.216.106.238:6315",
+    "server": "216.173.104.197:6334",
+    # "server": "185.216.106.238:6315",
 }
 
 stealth_config = StealthConfig(navigator_languages=False, navigator_vendor=False, navigator_user_agent=False)

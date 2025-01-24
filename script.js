@@ -58,7 +58,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     var threeByThreeUrl = "https://www.sadcaptcha.com/api/v1/temu-three-by-three?licenseKey=";
     var puzzleUrl = "https://www.sadcaptcha.com/api/v1/puzzle?licenseKey=";
     var semanticShapesUrl = "https://www.sadcaptcha.com/api/v1/semantic-shapes?licenseKey=";
-    var corsProxy = "https://corsproxy.io/?";
     var API_HEADERS = new Headers({ "Content-Type": "application/json" });
     var ARCED_SLIDE_PUZZLE_IMAGE_SELECTOR = "#slider > img";
     var ARCED_SLIDE_PIECE_CONTAINER_SELECTOR = "#img-button";
@@ -70,12 +69,10 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     var PUZZLE_PIECE_IMAGE_SELECTOR = "#img-button > img";
     var PUZZLE_SLIDER_WRAPPER = "[class^=slider-wrapper]";
     var PUZZLE_UNIQUE_IDENTIFIERS = ["#Slider"];
-    var SEMANTIC_SHAPES_IFRAME = ".iframe-3eaNR";
-    var SEMANTIC_SHAPES_CHALLENGE_ROOT_ELE = "#Picture";
-    var SEMANTIC_SHAPES_CHALLENGE_TEXT = ".picture-text-2Alt0";
+    var SEMANTIC_SHAPES_CHALLENGE_TEXT = ".picture-text-2Alt0, div._2Alt0zsN";
     var SEMANTIC_SHAPES_IMAGE = "#captchaImg";
-    var SEMANTIC_SHAPES_REFRESH_BUTTON = ".refresh-27d6x";
-    var SEMANTIC_SHAPES_UNIQUE_IDENTIFIERS = [SEMANTIC_SHAPES_IMAGE];
+    var SEMANTIC_SHAPES_REFRESH_BUTTON = ".refresh-27d6x, .ZVIQM964";
+    var SEMANTIC_SHAPES_UNIQUE_IDENTIFIERS = [SEMANTIC_SHAPES_IMAGE, ".iframe-3eaNR", ".iframe-8Vtge", "#captchaImg"];
     var THREE_BY_THREE_IMAGE = "img.loaded";
     var THREE_BY_THREE_TEXT = ".verifyDialog div[role=dialog]";
     var THREE_BY_THREE_CONFIRM_BUTTON = ".verifyDialog div[role=button]:has(span)";
@@ -85,7 +82,11 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         "#Slider",
         "#slider",
         "iframe",
-        "#imageSemantics img.loaded"
+        "#imageSemantics img.loaded",
+        SEMANTIC_SHAPES_IMAGE,
+        ".iframe-3eaNR",
+        ".iframe-8Vtge",
+        "#captchaImg"
     ];
     var CaptchaType;
     (function (CaptchaType) {
@@ -148,26 +149,28 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
             });
         });
     }
-    function waitForElement(selector, iframeSelector) {
+    function waitForElement(selector) {
         return new Promise(function (resolve) {
-            var targetDocument;
-            if (iframeSelector !== undefined) {
-                var iframe = document.querySelector(iframeSelector);
-                targetDocument = iframe.contentWindow.document;
-            }
-            else {
-                targetDocument = window.document;
-            }
-            if (targetDocument.querySelector(selector)) {
+            if (document.querySelector(selector)) {
+                console.log("checking for " + selector);
                 console.log("Selector found: " + selector);
-                return resolve(targetDocument.querySelector(selector));
+                return resolve(document.querySelector(selector));
+            }
+            else if (document.querySelector("iframe")) {
+                console.log("checking in iframe...");
+                var iframe = document.querySelector("iframe");
+                var ele = iframe.contentWindow.document.querySelector(selector);
+                if (ele) {
+                    console.log("Selector found: " + selector);
+                    return ele;
+                }
             }
             else {
                 var observer_1 = new MutationObserver(function (_) {
-                    if (targetDocument.querySelector(selector)) {
+                    if (document.querySelector(selector)) {
                         observer_1.disconnect();
                         console.log("Selector found by mutation observer: " + selector);
-                        return resolve(targetDocument.querySelector(selector));
+                        return resolve(document.querySelector(selector));
                     }
                 });
                 observer_1.observe(CONTAINER, {
@@ -177,18 +180,20 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
             }
         });
     }
-    function getTextContent(selector, iframeSelector) {
-        var targetDocument;
-        if (iframeSelector !== undefined) {
-            var iframe = document.querySelector(iframeSelector);
-            targetDocument = iframe.contentWindow.document;
-        }
-        else {
-            targetDocument = window.document;
-        }
-        var text = targetDocument.querySelector(selector).textContent;
-        console.log("text of ".concat(selector, ": ").concat(text));
-        return text;
+    function getTextContent(selector) {
+        return __awaiter(this, void 0, void 0, function () {
+            var ele, text;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, waitForElement(selector)];
+                    case 1:
+                        ele = _a.sent();
+                        text = ele.textContent;
+                        console.log("text of ".concat(selector, ": ").concat(text));
+                        return [2 /*return*/, text];
+                }
+            });
+        });
     }
     function creditsApiCall() {
         return __awaiter(this, void 0, void 0, function () {
@@ -362,12 +367,12 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
             });
         });
     }
-    function getImageSource(selector, iframeSelector) {
+    function getImageSource(selector) {
         return __awaiter(this, void 0, void 0, function () {
             var ele, src;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, waitForElement(selector, iframeSelector)];
+                    case 0: return [4 /*yield*/, waitForElement(selector)];
                     case 1:
                         ele = _a.sent();
                         src = ele.getAttribute("src");
@@ -772,44 +777,49 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
             var src, img, challenge, res, err_1, ele, _i, _a, point, newChallenge, challengeDidNotChange;
             return __generator(this, function (_b) {
                 switch (_b.label) {
-                    case 0: return [4 /*yield*/, getImageSource(SEMANTIC_SHAPES_IMAGE, SEMANTIC_SHAPES_IFRAME)];
+                    case 0: return [4 /*yield*/, getImageSource(SEMANTIC_SHAPES_IMAGE)];
                     case 1:
                         src = _b.sent();
                         img = getBase64StringFromDataURL(src);
-                        challenge = getTextContent(SEMANTIC_SHAPES_CHALLENGE_TEXT, SEMANTIC_SHAPES_IFRAME);
-                        _b.label = 2;
+                        return [4 /*yield*/, getTextContent(SEMANTIC_SHAPES_CHALLENGE_TEXT)];
                     case 2:
-                        _b.trys.push([2, 4, , 5]);
-                        return [4 /*yield*/, semanticShapesApiCall(challenge, img)];
+                        challenge = _b.sent();
+                        _b.label = 3;
                     case 3:
-                        res = _b.sent();
-                        return [3 /*break*/, 5];
+                        _b.trys.push([3, 5, , 6]);
+                        return [4 /*yield*/, semanticShapesApiCall(challenge, img)];
                     case 4:
+                        res = _b.sent();
+                        return [3 /*break*/, 6];
+                    case 5:
                         err_1 = _b.sent();
                         console.log("Error calling semantic shapes API. refreshing and retrying");
                         console.error(err_1);
                         refreshSemanticShapes();
                         solveSemanticShapes();
-                        return [3 /*break*/, 5];
-                    case 5:
-                        ele = document.querySelector("iframe").contentWindow.document.body.querySelector(SEMANTIC_SHAPES_IMAGE);
+                        return [3 /*break*/, 6];
+                    case 6: return [4 /*yield*/, waitForElement(SEMANTIC_SHAPES_IMAGE)];
+                    case 7:
+                        ele = _b.sent();
                         _i = 0, _a = res.proportionalPoints;
-                        _b.label = 6;
-                    case 6:
-                        if (!(_i < _a.length)) return [3 /*break*/, 9];
+                        _b.label = 8;
+                    case 8:
+                        if (!(_i < _a.length)) return [3 /*break*/, 11];
                         point = _a[_i];
                         clickProportional(ele, point.proportionX, point.proportionY);
                         return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 1337); })];
-                    case 7:
+                    case 9:
                         _b.sent();
-                        _b.label = 8;
-                    case 8:
-                        _i++;
-                        return [3 /*break*/, 6];
-                    case 9: return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 3000); })];
+                        _b.label = 10;
                     case 10:
+                        _i++;
+                        return [3 /*break*/, 8];
+                    case 11: return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 3000); })];
+                    case 12:
                         _b.sent();
-                        newChallenge = getTextContent(SEMANTIC_SHAPES_CHALLENGE_TEXT, SEMANTIC_SHAPES_IFRAME);
+                        return [4 /*yield*/, getTextContent(SEMANTIC_SHAPES_CHALLENGE_TEXT)];
+                    case 13:
+                        newChallenge = _b.sent();
                         challengeDidNotChange = (challenge === newChallenge);
                         if (challengeDidNotChange) {
                             console.log("It seems that the shapes challenge did not change after clicking the image."
@@ -819,7 +829,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                             solveSemanticShapes();
                         }
                         return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 3000); })];
-                    case 11:
+                    case 14:
                         _b.sent();
                         return [2 /*return*/];
                 }
@@ -837,14 +847,16 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                         imageElements.forEach(function (ele) {
                             imageB64.push(getBase64StringFromDataURL(ele.getAttribute("src")));
                         });
-                        challengeText = getTextContent(THREE_BY_THREE_TEXT);
+                        return [4 /*yield*/, getTextContent(THREE_BY_THREE_TEXT)];
+                    case 1:
+                        challengeText = _a.sent();
                         objects = parseThreeByThreeObjectsOfInterest(challengeText);
                         request = {
                             objects_of_interest: objects,
                             images: imageB64
                         };
                         return [4 /*yield*/, threeByThreeApiCall(request)];
-                    case 1:
+                    case 2:
                         resp = _a.sent();
                         resp.solution_indices.forEach(function (i) {
                             var ele = document.querySelector("img[src*=\"".concat(imageB64[i], "\"]"));

@@ -32,7 +32,6 @@ interface Request {
 	let puzzleUrl = "https://www.sadcaptcha.com/api/v1/puzzle?licenseKey="
 	let semanticShapesUrl = "https://www.sadcaptcha.com/api/v1/semantic-shapes?licenseKey="
 
-	const corsProxy = "https://corsproxy.io/?"
 	const API_HEADERS = new Headers({ "Content-Type": "application/json" })
 
 	const ARCED_SLIDE_PUZZLE_IMAGE_SELECTOR = "#slider > img"
@@ -47,12 +46,10 @@ interface Request {
 	const PUZZLE_SLIDER_WRAPPER = "[class^=slider-wrapper]"
 	const PUZZLE_UNIQUE_IDENTIFIERS = ["#Slider"]
 
-	const SEMANTIC_SHAPES_IFRAME = ".iframe-3eaNR"
-	const SEMANTIC_SHAPES_CHALLENGE_ROOT_ELE = "#Picture"
-	const SEMANTIC_SHAPES_CHALLENGE_TEXT = ".picture-text-2Alt0"
+	const SEMANTIC_SHAPES_CHALLENGE_TEXT = ".picture-text-2Alt0, div._2Alt0zsN"
 	const SEMANTIC_SHAPES_IMAGE = "#captchaImg"
-	const SEMANTIC_SHAPES_REFRESH_BUTTON = ".refresh-27d6x"
-	const SEMANTIC_SHAPES_UNIQUE_IDENTIFIERS = [SEMANTIC_SHAPES_IMAGE]
+	const SEMANTIC_SHAPES_REFRESH_BUTTON = ".refresh-27d6x, .ZVIQM964"
+	const SEMANTIC_SHAPES_UNIQUE_IDENTIFIERS = [SEMANTIC_SHAPES_IMAGE, ".iframe-3eaNR", ".iframe-8Vtge", "#captchaImg"]
 
 	const THREE_BY_THREE_IMAGE = "img.loaded"
 	const THREE_BY_THREE_TEXT = ".verifyDialog div[role=dialog]"
@@ -64,7 +61,11 @@ interface Request {
 		"#Slider",
 		"#slider",
 		"iframe",
-		"#imageSemantics img.loaded"
+		"#imageSemantics img.loaded",
+		SEMANTIC_SHAPES_IMAGE,
+		".iframe-3eaNR",
+		".iframe-8Vtge",
+		"#captchaImg"
 	]
 
 	type Point = {
@@ -177,24 +178,26 @@ interface Request {
 		})
 	}
 
-	function waitForElement(selector: string, iframeSelector?: string): Promise<Element> {
+	function waitForElement(selector: string): Promise<Element> {
 		return new Promise(resolve => {
-			let targetDocument: Document;
-			if (iframeSelector !== undefined) {
-				let iframe = document.querySelector(iframeSelector) as HTMLIFrameElement
-				targetDocument = iframe.contentWindow.document
-			} else {
-				targetDocument = window.document
-			}
-			if (targetDocument.querySelector(selector)) {
+			if (document.querySelector(selector)) {
+				console.log("checking for " + selector)
 				console.log("Selector found: " + selector)
-				return resolve(targetDocument.querySelector(selector)!)
+				return resolve(document.querySelector(selector)!) 
+			} else if (document.querySelector("iframe")){
+				console.log("checking in iframe...")
+				let iframe = document.querySelector("iframe")
+				let ele = iframe.contentWindow.document.querySelector(selector)
+				if (ele) {
+					console.log("Selector found: " + selector)
+					return ele
+				}
 			} else {
 				const observer: MutationObserver = new MutationObserver(_ => {
-					if (targetDocument.querySelector(selector)) {
+					if (document.querySelector(selector)) {
 						observer.disconnect()
 						console.log("Selector found by mutation observer: " + selector)
-						return resolve(targetDocument.querySelector(selector)!)
+						return resolve(document.querySelector(selector)!)
 					}
 				})
 				observer.observe(CONTAINER, {
@@ -205,15 +208,9 @@ interface Request {
 		})
 	}
 
-	function getTextContent(selector: string, iframeSelector?: string): string {
-		let targetDocument: Document;
-		if (iframeSelector !== undefined) {
-			let iframe = document.querySelector(iframeSelector) as HTMLIFrameElement
-			targetDocument = iframe.contentWindow.document
-		} else {
-			targetDocument = window.document
-		}
-		let text = targetDocument.querySelector(selector).textContent
+	async function getTextContent(selector: string): Promise<string> {
+		let ele = await waitForElement(selector)
+		let text = ele.textContent
 		console.log(`text of ${selector}: ${text}`)
 		return text
 	}
@@ -316,8 +313,8 @@ interface Request {
 		throw new Error("Could not identify CaptchaType")
 	}
 
-	async function getImageSource(selector: string, iframeSelector?: string): Promise<string> {
-		let ele = await waitForElement(selector, iframeSelector)
+	async function getImageSource(selector: string): Promise<string> {
+		let ele = await waitForElement(selector)
 		let src = ele.getAttribute("src")
 		console.log("src = " + selector)
 		return src
@@ -681,9 +678,9 @@ interface Request {
 	}
 
 	async function solveSemanticShapes(): Promise<void> {
-		let src = await getImageSource(SEMANTIC_SHAPES_IMAGE, SEMANTIC_SHAPES_IFRAME)
+		let src = await getImageSource(SEMANTIC_SHAPES_IMAGE)
 		let img = getBase64StringFromDataURL(src)
-		let challenge = getTextContent(SEMANTIC_SHAPES_CHALLENGE_TEXT, SEMANTIC_SHAPES_IFRAME)
+		let challenge = await getTextContent(SEMANTIC_SHAPES_CHALLENGE_TEXT)
 		let res: SemanticShapesResponse
 		try {
 			res = await semanticShapesApiCall(challenge, img)
@@ -693,13 +690,13 @@ interface Request {
 			refreshSemanticShapes()
 			solveSemanticShapes()
 		}
-		let ele = document.querySelector("iframe").contentWindow.document.body.querySelector(SEMANTIC_SHAPES_IMAGE)
+		let ele = await waitForElement(SEMANTIC_SHAPES_IMAGE)
 		for (const point of res.proportionalPoints) {
 			clickProportional(ele, point.proportionX, point.proportionY)
 			await new Promise(r => setTimeout(r, 1337));
 		}
 		await new Promise(r => setTimeout(r, 3000));
-		let newChallenge = getTextContent(SEMANTIC_SHAPES_CHALLENGE_TEXT, SEMANTIC_SHAPES_IFRAME)
+		let newChallenge = await getTextContent(SEMANTIC_SHAPES_CHALLENGE_TEXT)
 		let challengeDidNotChange = (challenge === newChallenge)
 		if (challengeDidNotChange) {
 			console.log(
@@ -719,7 +716,7 @@ interface Request {
 		imageElements.forEach(ele => {
 			imageB64.push(getBase64StringFromDataURL(ele.getAttribute("src")))
 		})
-		let challengeText = getTextContent(THREE_BY_THREE_TEXT)
+		let challengeText = await getTextContent(THREE_BY_THREE_TEXT)
 		let objects = parseThreeByThreeObjectsOfInterest(challengeText)
 		let request: ThreeByThreeCaptchaRequest = {
 			objects_of_interest: objects,

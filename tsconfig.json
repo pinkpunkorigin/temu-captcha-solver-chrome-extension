@@ -4,8 +4,10 @@
         "noEmitOnError": true,
         "removeComments": false,
         "sourceMap": true,
-        "target": "es2021",
-        "lib": ["es2021", "dom"],
+		"module": "es6",
+		"moduleResolution": "Node",
+        "target": "es6",
+        "lib": ["ES6", "dom"],
     },
     "include": [
         "script.ts",
