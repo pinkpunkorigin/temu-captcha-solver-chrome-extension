@@ -49,7 +49,7 @@ interface Request {
 	const SEMANTIC_SHAPES_CHALLENGE_TEXT = ".picture-text-2Alt0, div._2Alt0zsN"
 	const SEMANTIC_SHAPES_IMAGE = "#captchaImg"
 	const SEMANTIC_SHAPES_REFRESH_BUTTON = ".refresh-27d6x, .ZVIQM964"
-	const SEMANTIC_SHAPES_UNIQUE_IDENTIFIERS = [SEMANTIC_SHAPES_IMAGE, ".iframe-3eaNR", ".iframe-8Vtge", "#captchaImg"]
+	const SEMANTIC_SHAPES_UNIQUE_IDENTIFIERS = [SEMANTIC_SHAPES_IMAGE, "#captchaImg"]
 
 	const THREE_BY_THREE_IMAGE = "img.loaded"
 	const THREE_BY_THREE_TEXT = ".verifyDialog div[role=dialog]"
@@ -180,8 +180,8 @@ interface Request {
 
 	function waitForElement(selector: string): Promise<Element> {
 		return new Promise(resolve => {
+			console.log("checking for " + selector)
 			if (document.querySelector(selector)) {
-				console.log("checking for " + selector)
 				console.log("Selector found: " + selector)
 				return resolve(document.querySelector(selector)!) 
 			} else if (document.querySelector("iframe")){
@@ -190,7 +190,7 @@ interface Request {
 				let ele = iframe.contentWindow.document.querySelector(selector)
 				if (ele) {
 					console.log("Selector found: " + selector)
-					return ele
+					return resolve(ele)
 				}
 			} else {
 				const observer: MutationObserver = new MutationObserver(_ => {
@@ -199,7 +199,53 @@ interface Request {
 						console.log("Selector found by mutation observer: " + selector)
 						return resolve(document.querySelector(selector)!)
 					}
+					let iframe = document.querySelector("iframe")
+					let ele = iframe.contentWindow.document.querySelector(selector)
+					if (ele) {
+						observer.disconnect()
+						console.log("Selector found by mutation observer: " + selector)
+						return resolve(ele)
+					}
 				})
+				console.log("created mutation observer")
+				observer.observe(CONTAINER, {
+					childList: true,
+					subtree: true
+				})
+			}
+		})
+	}
+
+	function waitForAllElements(selector: string): Promise<NodeListOf<Element>> {
+		return new Promise(resolve => {
+			console.log("checking for " + selector)
+			if (document.querySelector(selector)) {
+				console.log("Selector found: " + selector)
+				return resolve(document.querySelectorAll(selector)!) 
+			} else if (document.querySelector("iframe")){
+				console.log("checking in iframe...")
+				let iframe = document.querySelector("iframe")
+				let ele = iframe.contentWindow.document.querySelectorAll(selector)
+				if (ele) {
+					console.log("Selector found: " + selector)
+					return resolve(ele)
+				}
+			} else {
+				const observer: MutationObserver = new MutationObserver(_ => {
+					if (document.querySelector(selector)) {
+						observer.disconnect()
+						console.log("Selector found by mutation observer: " + selector)
+						return resolve(document.querySelectorAll(selector)!)
+					}
+					let iframe = document.querySelector("iframe")
+					let ele = iframe.contentWindow.document.querySelectorAll(selector)
+					if (ele) {
+						observer.disconnect()
+						console.log("Selector found by mutation observer: " + selector)
+						return resolve(ele)
+					}
+				})
+				console.log("created mutation observer")
 				observer.observe(CONTAINER, {
 					childList: true,
 					subtree: true
@@ -487,10 +533,10 @@ interface Request {
 		let pieceImageSrc = await getImageSource(ARCED_SLIDE_PIECE_IMAGE_SELECTOR)
 		let puzzleImg = getBase64StringFromDataURL(puzzleImageSrc)
 		let pieceImg = getBase64StringFromDataURL(pieceImageSrc)
-		let slideButtonEle = document.querySelector(ARCED_SLIDE_BUTTON_SELECTOR)
+		let slideButtonEle = await waitForElement(ARCED_SLIDE_BUTTON_SELECTOR)
 		const startX = getElementCenter(slideButtonEle).x
 		const startY = getElementCenter(slideButtonEle).y
-		let puzzleEle = document.querySelector(ARCED_SLIDE_PUZZLE_IMAGE_SELECTOR)
+		let puzzleEle = await waitForElement(ARCED_SLIDE_PUZZLE_IMAGE_SELECTOR)
 		let trajectory = await getSlidePieceTrajectory(slideButtonEle, puzzleEle)
 		let solution = await arcedSlideApiCall({
 			piece_image_b64: pieceImg,
@@ -521,7 +567,7 @@ interface Request {
 	}
 
 	async function getSlidePieceTrajectory(slideButton: Element, puzzle: Element): Promise<Array<TrajectoryElement>> {
-		let sliderPieceContainer = document.querySelector(ARCED_SLIDE_PIECE_CONTAINER_SELECTOR)
+		let sliderPieceContainer = await waitForElement(ARCED_SLIDE_PIECE_CONTAINER_SELECTOR)
 		console.log("got slider piece container")
 		let slideBarWidth = getElementWidth(puzzle)
 		console.log("slide bar width: " + slideBarWidth)
@@ -630,8 +676,8 @@ interface Request {
 
 	async function solvePuzzle(): Promise<void> {
 		await new Promise(r => setTimeout(r, 3000));
-		let sliderWrapper = document.querySelector(PUZZLE_SLIDER_WRAPPER)
-		let sliderButton = document.querySelector(PUZZLE_BUTTON_SELECTOR)
+		let sliderWrapper = await waitForElement(PUZZLE_SLIDER_WRAPPER)
+		let sliderButton = await waitForElement(PUZZLE_BUTTON_SELECTOR)
 		let wrapperCenter = getElementCenter(sliderWrapper)
 		let buttonCenter = getElementCenter(sliderButton)
 		let preRequestSlidePixels = 10
@@ -659,7 +705,7 @@ interface Request {
 		console.log("converted image sources to b64 string")
 		let solution = await puzzleApiCall(puzzleImg, pieceImg)
 		console.log("got API result: " + solution)
-		let puzzleImageEle = document.querySelector(PUZZLE_PUZZLE_IMAGE_SELECTOR)
+		let puzzleImageEle = await waitForElement(PUZZLE_PUZZLE_IMAGE_SELECTOR)
 		let distance = computePuzzleSlideDistance(solution, puzzleImageEle)
 		let currentX: number
 		let currentY: number
@@ -687,8 +733,8 @@ interface Request {
 		} catch (err) {
 			console.log("Error calling semantic shapes API. refreshing and retrying")
 			console.error(err)
-			refreshSemanticShapes()
-			solveSemanticShapes()
+			await refreshSemanticShapes()
+			await solveSemanticShapes()
 		}
 		let ele = await waitForElement(SEMANTIC_SHAPES_IMAGE)
 		for (const point of res.proportionalPoints) {
@@ -704,14 +750,14 @@ interface Request {
 				+ "This is probably because the solution lies under tha black loading box, "
 				+ "which means it's impossible to click (thanks temu). Refreshing and retrying."
 			)
-			refreshSemanticShapes()
-			solveSemanticShapes()
+			await refreshSemanticShapes()
+			await solveSemanticShapes()
 		}
 		await new Promise(r => setTimeout(r, 3000));
 	}
 
 	async function solveThreeByThree() {
-		let imageElements = document.querySelectorAll(THREE_BY_THREE_IMAGE)
+		let imageElements = await waitForAllElements(THREE_BY_THREE_IMAGE)
 		let imageB64 = []
 		imageElements.forEach(ele => {
 			imageB64.push(getBase64StringFromDataURL(ele.getAttribute("src")))
@@ -723,12 +769,12 @@ interface Request {
 			images: imageB64
 		}
 		let resp = await threeByThreeApiCall(request)
-		resp.solution_indices.forEach(i => {
-			let ele = document.querySelector(`img[src*="${imageB64[i]}"]`)	
+		for (let i in resp.solution_indices) {
+			let ele = await waitForElement(`img[src*="${imageB64[i]}"]`)	
 			clickProportional(ele, 0.69, 0.69)
 			setTimeout(() => null, 1337)
-		})
-		clickProportional(document.querySelector(THREE_BY_THREE_CONFIRM_BUTTON), 0.69, 0.420)
+		}
+		clickProportional(await waitForElement(THREE_BY_THREE_CONFIRM_BUTTON), 0.69, 0.420)
 	}
 
 	/*
@@ -743,12 +789,8 @@ interface Request {
 		return objects
 	}
 
-	function refreshSemanticShapes() {
-			let refreshButton = document
-				.querySelector("iframe")
-				.contentWindow
-				.document
-				.querySelector(SEMANTIC_SHAPES_REFRESH_BUTTON)
+	async function refreshSemanticShapes() {
+			let refreshButton = await waitForElement(SEMANTIC_SHAPES_REFRESH_BUTTON)
 			clickCenterOfElement(refreshButton)
 			setTimeout(() => null, 3000)
 

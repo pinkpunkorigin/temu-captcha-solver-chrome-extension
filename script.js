@@ -72,7 +72,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     var SEMANTIC_SHAPES_CHALLENGE_TEXT = ".picture-text-2Alt0, div._2Alt0zsN";
     var SEMANTIC_SHAPES_IMAGE = "#captchaImg";
     var SEMANTIC_SHAPES_REFRESH_BUTTON = ".refresh-27d6x, .ZVIQM964";
-    var SEMANTIC_SHAPES_UNIQUE_IDENTIFIERS = [SEMANTIC_SHAPES_IMAGE, ".iframe-3eaNR", ".iframe-8Vtge", "#captchaImg"];
+    var SEMANTIC_SHAPES_UNIQUE_IDENTIFIERS = [SEMANTIC_SHAPES_IMAGE, "#captchaImg"];
     var THREE_BY_THREE_IMAGE = "img.loaded";
     var THREE_BY_THREE_TEXT = ".verifyDialog div[role=dialog]";
     var THREE_BY_THREE_CONFIRM_BUTTON = ".verifyDialog div[role=button]:has(span)";
@@ -151,8 +151,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
     function waitForElement(selector) {
         return new Promise(function (resolve) {
+            console.log("checking for " + selector);
             if (document.querySelector(selector)) {
-                console.log("checking for " + selector);
                 console.log("Selector found: " + selector);
                 return resolve(document.querySelector(selector));
             }
@@ -162,7 +162,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                 var ele = iframe.contentWindow.document.querySelector(selector);
                 if (ele) {
                     console.log("Selector found: " + selector);
-                    return ele;
+                    return resolve(ele);
                 }
             }
             else {
@@ -172,8 +172,55 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                         console.log("Selector found by mutation observer: " + selector);
                         return resolve(document.querySelector(selector));
                     }
+                    var iframe = document.querySelector("iframe");
+                    var ele = iframe.contentWindow.document.querySelector(selector);
+                    if (ele) {
+                        observer_1.disconnect();
+                        console.log("Selector found by mutation observer: " + selector);
+                        return resolve(ele);
+                    }
                 });
+                console.log("created mutation observer");
                 observer_1.observe(CONTAINER, {
+                    childList: true,
+                    subtree: true
+                });
+            }
+        });
+    }
+    function waitForAllElements(selector) {
+        return new Promise(function (resolve) {
+            console.log("checking for " + selector);
+            if (document.querySelector(selector)) {
+                console.log("Selector found: " + selector);
+                return resolve(document.querySelectorAll(selector));
+            }
+            else if (document.querySelector("iframe")) {
+                console.log("checking in iframe...");
+                var iframe = document.querySelector("iframe");
+                var ele = iframe.contentWindow.document.querySelectorAll(selector);
+                if (ele) {
+                    console.log("Selector found: " + selector);
+                    return resolve(ele);
+                }
+            }
+            else {
+                var observer_2 = new MutationObserver(function (_) {
+                    if (document.querySelector(selector)) {
+                        observer_2.disconnect();
+                        console.log("Selector found by mutation observer: " + selector);
+                        return resolve(document.querySelectorAll(selector));
+                    }
+                    var iframe = document.querySelector("iframe");
+                    var ele = iframe.contentWindow.document.querySelectorAll(selector);
+                    if (ele) {
+                        observer_2.disconnect();
+                        console.log("Selector found by mutation observer: " + selector);
+                        return resolve(ele);
+                    }
+                });
+                console.log("created mutation observer");
+                observer_2.observe(CONTAINER, {
                     childList: true,
                     subtree: true
                 });
@@ -528,47 +575,51 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                         pieceImageSrc = _a.sent();
                         puzzleImg = getBase64StringFromDataURL(puzzleImageSrc);
                         pieceImg = getBase64StringFromDataURL(pieceImageSrc);
-                        slideButtonEle = document.querySelector(ARCED_SLIDE_BUTTON_SELECTOR);
+                        return [4 /*yield*/, waitForElement(ARCED_SLIDE_BUTTON_SELECTOR)];
+                    case 3:
+                        slideButtonEle = _a.sent();
                         startX = getElementCenter(slideButtonEle).x;
                         startY = getElementCenter(slideButtonEle).y;
-                        puzzleEle = document.querySelector(ARCED_SLIDE_PUZZLE_IMAGE_SELECTOR);
+                        return [4 /*yield*/, waitForElement(ARCED_SLIDE_PUZZLE_IMAGE_SELECTOR)];
+                    case 4:
+                        puzzleEle = _a.sent();
                         return [4 /*yield*/, getSlidePieceTrajectory(slideButtonEle, puzzleEle)];
-                    case 3:
+                    case 5:
                         trajectory = _a.sent();
                         return [4 /*yield*/, arcedSlideApiCall({
                                 piece_image_b64: pieceImg,
                                 puzzle_image_b64: puzzleImg,
                                 slide_piece_trajectory: trajectory
                             })];
-                    case 4:
+                    case 6:
                         solution = _a.sent();
                         currentX = getElementCenter(slideButtonEle).x;
                         solutionDistanceBackwards = currentX - startX - solution;
                         overshoot = 6;
                         mouseStep = 2;
                         return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 100); })];
-                    case 5:
+                    case 7:
                         _a.sent();
                         i = 0;
-                        _a.label = 6;
-                    case 6:
-                        if (!(i < solutionDistanceBackwards)) return [3 /*break*/, 9];
+                        _a.label = 8;
+                    case 8:
+                        if (!(i < solutionDistanceBackwards)) return [3 /*break*/, 11];
                         mouseMove(currentX - i, startY + Math.random() * 5);
                         console.debug("current x: " + currentX);
                         return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 10 + Math.random() * 5); })];
-                    case 7:
+                    case 9:
                         _a.sent();
-                        _a.label = 8;
-                    case 8:
-                        i += 1;
-                        return [3 /*break*/, 6];
-                    case 9: return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 300); })];
+                        _a.label = 10;
                     case 10:
+                        i += 1;
+                        return [3 /*break*/, 8];
+                    case 11: return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 300); })];
+                    case 12:
                         _a.sent();
                         mouseMove(startX + solution, startY);
                         mouseUp(startX + solution, startY);
                         return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 3000); })];
-                    case 11:
+                    case 13:
                         _a.sent();
                         return [2 /*return*/];
                 }
@@ -580,8 +631,9 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
             var sliderPieceContainer, slideBarWidth, timesPieceDidNotMove, slideButtonCenter, puzzleImageBoundingBox, trajectory, mouseStep, pixel, trajectoryElement;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0:
-                        sliderPieceContainer = document.querySelector(ARCED_SLIDE_PIECE_CONTAINER_SELECTOR);
+                    case 0: return [4 /*yield*/, waitForElement(ARCED_SLIDE_PIECE_CONTAINER_SELECTOR)];
+                    case 1:
+                        sliderPieceContainer = _a.sent();
                         console.log("got slider piece container");
                         slideBarWidth = getElementWidth(puzzle);
                         console.log("slide bar width: " + slideBarWidth);
@@ -601,11 +653,11 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                             clientY: slideButtonCenter.y
                         }));
                         pixel = 0;
-                        _a.label = 1;
-                    case 1:
-                        if (!(pixel < slideBarWidth)) return [3 /*break*/, 5];
-                        return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 10 + Math.random() * 5); })];
+                        _a.label = 2;
                     case 2:
+                        if (!(pixel < slideBarWidth)) return [3 /*break*/, 6];
+                        return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 10 + Math.random() * 5); })];
+                    case 3:
                         _a.sent();
                         //moveMouseTo(slideButtonCenter.x + pixel, slideButtonCenter.y - pixel)
                         slideButton.dispatchEvent(new MouseEvent("mousemove", {
@@ -616,25 +668,25 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                             clientY: slideButtonCenter.y - Math.log(pixel + 1)
                         }));
                         return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 40); })];
-                    case 3:
+                    case 4:
                         _a.sent();
                         trajectoryElement = getTrajectoryElement(pixel, puzzleImageBoundingBox, sliderPieceContainer);
                         trajectory.push(trajectoryElement);
                         if (trajectory.length < 100 / mouseStep)
-                            return [3 /*break*/, 4];
+                            return [3 /*break*/, 5];
                         if (pieceIsNotMoving(trajectory))
                             timesPieceDidNotMove++;
                         else
                             timesPieceDidNotMove = 0;
                         if (timesPieceDidNotMove >= 10 / mouseStep)
-                            return [3 /*break*/, 5];
+                            return [3 /*break*/, 6];
                         console.log("trajectory element:");
                         console.dir(trajectoryElement);
-                        _a.label = 4;
-                    case 4:
+                        _a.label = 5;
+                    case 5:
                         pixel += mouseStep;
-                        return [3 /*break*/, 1];
-                    case 5: return [2 /*return*/, trajectory];
+                        return [3 /*break*/, 2];
+                    case 6: return [2 /*return*/, trajectory];
                 }
             });
         });
@@ -693,8 +745,12 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                     case 0: return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 3000); })];
                     case 1:
                         _a.sent();
-                        sliderWrapper = document.querySelector(PUZZLE_SLIDER_WRAPPER);
-                        sliderButton = document.querySelector(PUZZLE_BUTTON_SELECTOR);
+                        return [4 /*yield*/, waitForElement(PUZZLE_SLIDER_WRAPPER)];
+                    case 2:
+                        sliderWrapper = _a.sent();
+                        return [4 /*yield*/, waitForElement(PUZZLE_BUTTON_SELECTOR)];
+                    case 3:
+                        sliderButton = _a.sent();
                         wrapperCenter = getElementCenter(sliderWrapper);
                         buttonCenter = getElementCenter(sliderButton);
                         preRequestSlidePixels = 10;
@@ -702,70 +758,72 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                         mouseMove(wrapperCenter.x, wrapperCenter.y);
                         mouseOver(wrapperCenter.x, wrapperCenter.y);
                         return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 133.7); })];
-                    case 2:
+                    case 4:
                         _a.sent();
                         mouseMove(buttonCenter.x, buttonCenter.y);
                         mouseOver(buttonCenter.x, buttonCenter.y);
                         return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 133.7); })];
-                    case 3:
+                    case 5:
                         _a.sent();
                         mouseDown(buttonCenter.x, buttonCenter.y);
                         return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 133.7); })];
-                    case 4:
-                        _a.sent();
-                        i = 1;
-                        _a.label = 5;
-                    case 5:
-                        if (!(i < preRequestSlidePixels)) return [3 /*break*/, 8];
-                        mouseMove(buttonCenter.x + i, buttonCenter.y - Math.log(i) + Math.random() * 3);
-                        return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, Math.random() * 5 + 10); })];
                     case 6:
                         _a.sent();
+                        i = 1;
                         _a.label = 7;
                     case 7:
-                        i++;
-                        return [3 /*break*/, 5];
-                    case 8: return [4 /*yield*/, getImageSource(PUZZLE_PUZZLE_IMAGE_SELECTOR)];
+                        if (!(i < preRequestSlidePixels)) return [3 /*break*/, 10];
+                        mouseMove(buttonCenter.x + i, buttonCenter.y - Math.log(i) + Math.random() * 3);
+                        return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, Math.random() * 5 + 10); })];
+                    case 8:
+                        _a.sent();
+                        _a.label = 9;
                     case 9:
+                        i++;
+                        return [3 /*break*/, 7];
+                    case 10: return [4 /*yield*/, getImageSource(PUZZLE_PUZZLE_IMAGE_SELECTOR)];
+                    case 11:
                         puzzleSrc = _a.sent();
                         return [4 /*yield*/, getImageSource(PUZZLE_PIECE_IMAGE_SELECTOR)];
-                    case 10:
+                    case 12:
                         pieceSrc = _a.sent();
                         console.log("got image sources");
                         puzzleImg = getBase64StringFromDataURL(puzzleSrc);
                         pieceImg = getBase64StringFromDataURL(pieceSrc);
                         console.log("converted image sources to b64 string");
                         return [4 /*yield*/, puzzleApiCall(puzzleImg, pieceImg)];
-                    case 11:
+                    case 13:
                         solution = _a.sent();
                         console.log("got API result: " + solution);
-                        puzzleImageEle = document.querySelector(PUZZLE_PUZZLE_IMAGE_SELECTOR);
+                        return [4 /*yield*/, waitForElement(PUZZLE_PUZZLE_IMAGE_SELECTOR)];
+                    case 14:
+                        puzzleImageEle = _a.sent();
                         distance = computePuzzleSlideDistance(solution, puzzleImageEle);
                         i = 1;
-                        _a.label = 12;
-                    case 12:
-                        if (!(i < distance - preRequestSlidePixels)) return [3 /*break*/, 15];
+                        _a.label = 15;
+                    case 15:
+                        if (!(i < distance - preRequestSlidePixels)) return [3 /*break*/, 18];
                         currentX = buttonCenter.x + i + preRequestSlidePixels;
                         currentY = buttonCenter.y - Math.log(i) + Math.random() * 3;
                         mouseMove(currentX, currentY);
                         mouseOver(currentX, currentY);
                         return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, Math.random() * 5 + 10); })];
-                    case 13:
-                        _a.sent();
-                        _a.label = 14;
-                    case 14:
-                        i += Math.random() * 5;
-                        return [3 /*break*/, 12];
-                    case 15: return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 133.7); })];
                     case 16:
+                        _a.sent();
+                        _a.label = 17;
+                    case 17:
+                        i += Math.random() * 5;
+                        return [3 /*break*/, 15];
+                    case 18: return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 133.7); })];
+                    case 19:
                         _a.sent();
                         mouseOver(buttonCenter.x + distance, buttonCenter.x - distance);
                         return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 133.7); })];
-                    case 17:
+                    case 20:
                         _a.sent();
                         mouseUp(buttonCenter.x + distance, buttonCenter.x - distance);
                         return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 3000); })];
-                    case 18:
+                    case 21:
                         _a.sent();
                         return [2 /*return*/];
                 }
@@ -786,50 +844,58 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                         challenge = _b.sent();
                         _b.label = 3;
                     case 3:
-                        _b.trys.push([3, 5, , 6]);
+                        _b.trys.push([3, 5, , 8]);
                         return [4 /*yield*/, semanticShapesApiCall(challenge, img)];
                     case 4:
                         res = _b.sent();
-                        return [3 /*break*/, 6];
+                        return [3 /*break*/, 8];
                     case 5:
                         err_1 = _b.sent();
                         console.log("Error calling semantic shapes API. refreshing and retrying");
                         console.error(err_1);
-                        refreshSemanticShapes();
-                        solveSemanticShapes();
-                        return [3 /*break*/, 6];
-                    case 6: return [4 /*yield*/, waitForElement(SEMANTIC_SHAPES_IMAGE)];
+                        return [4 /*yield*/, refreshSemanticShapes()];
+                    case 6:
+                        _b.sent();
+                        return [4 /*yield*/, solveSemanticShapes()];
                     case 7:
+                        _b.sent();
+                        return [3 /*break*/, 8];
+                    case 8: return [4 /*yield*/, waitForElement(SEMANTIC_SHAPES_IMAGE)];
+                    case 9:
                         ele = _b.sent();
                         _i = 0, _a = res.proportionalPoints;
-                        _b.label = 8;
-                    case 8:
-                        if (!(_i < _a.length)) return [3 /*break*/, 11];
+                        _b.label = 10;
+                    case 10:
+                        if (!(_i < _a.length)) return [3 /*break*/, 13];
                         point = _a[_i];
                         clickProportional(ele, point.proportionX, point.proportionY);
                         return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 1337); })];
-                    case 9:
+                    case 11:
                         _b.sent();
-                        _b.label = 10;
-                    case 10:
-                        _i++;
-                        return [3 /*break*/, 8];
-                    case 11: return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 3000); })];
+                        _b.label = 12;
                     case 12:
+                        _i++;
+                        return [3 /*break*/, 10];
+                    case 13: return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 3000); })];
+                    case 14:
                         _b.sent();
                         return [4 /*yield*/, getTextContent(SEMANTIC_SHAPES_CHALLENGE_TEXT)];
-                    case 13:
+                    case 15:
                         newChallenge = _b.sent();
                         challengeDidNotChange = (challenge === newChallenge);
-                        if (challengeDidNotChange) {
-                            console.log("It seems that the shapes challenge did not change after clicking the image."
-                                + "This is probably because the solution lies under tha black loading box, "
-                                + "which means it's impossible to click (thanks temu). Refreshing and retrying.");
-                            refreshSemanticShapes();
-                            solveSemanticShapes();
-                        }
-                        return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 3000); })];
-                    case 14:
+                        if (!challengeDidNotChange) return [3 /*break*/, 18];
+                        console.log("It seems that the shapes challenge did not change after clicking the image."
+                            + "This is probably because the solution lies under tha black loading box, "
+                            + "which means it's impossible to click (thanks temu). Refreshing and retrying.");
+                        return [4 /*yield*/, refreshSemanticShapes()];
+                    case 16:
+                        _b.sent();
+                        return [4 /*yield*/, solveSemanticShapes()];
+                    case 17:
+                        _b.sent();
+                        _b.label = 18;
+                    case 18: return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 3000); })];
+                    case 19:
                         _b.sent();
                         return [2 /*return*/];
                 }
@@ -838,32 +904,52 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
     function solveThreeByThree() {
         return __awaiter(this, void 0, void 0, function () {
-            var imageElements, imageB64, challengeText, objects, request, resp;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        imageElements = document.querySelectorAll(THREE_BY_THREE_IMAGE);
+            var imageElements, imageB64, challengeText, objects, request, resp, _a, _b, _c, _i, i, ele, _d;
+            return __generator(this, function (_e) {
+                switch (_e.label) {
+                    case 0: return [4 /*yield*/, waitForAllElements(THREE_BY_THREE_IMAGE)];
+                    case 1:
+                        imageElements = _e.sent();
                         imageB64 = [];
                         imageElements.forEach(function (ele) {
                             imageB64.push(getBase64StringFromDataURL(ele.getAttribute("src")));
                         });
                         return [4 /*yield*/, getTextContent(THREE_BY_THREE_TEXT)];
-                    case 1:
-                        challengeText = _a.sent();
+                    case 2:
+                        challengeText = _e.sent();
                         objects = parseThreeByThreeObjectsOfInterest(challengeText);
                         request = {
                             objects_of_interest: objects,
                             images: imageB64
                         };
                         return [4 /*yield*/, threeByThreeApiCall(request)];
-                    case 2:
-                        resp = _a.sent();
-                        resp.solution_indices.forEach(function (i) {
-                            var ele = document.querySelector("img[src*=\"".concat(imageB64[i], "\"]"));
-                            clickProportional(ele, 0.69, 0.69);
-                            setTimeout(function () { return null; }, 1337);
-                        });
-                        clickProportional(document.querySelector(THREE_BY_THREE_CONFIRM_BUTTON), 0.69, 0.420);
+                    case 3:
+                        resp = _e.sent();
+                        _a = resp.solution_indices;
+                        _b = [];
+                        for (_c in _a)
+                            _b.push(_c);
+                        _i = 0;
+                        _e.label = 4;
+                    case 4:
+                        if (!(_i < _b.length)) return [3 /*break*/, 7];
+                        _c = _b[_i];
+                        if (!(_c in _a)) return [3 /*break*/, 6];
+                        i = _c;
+                        return [4 /*yield*/, waitForElement("img[src*=\"".concat(imageB64[i], "\"]"))];
+                    case 5:
+                        ele = _e.sent();
+                        clickProportional(ele, 0.69, 0.69);
+                        setTimeout(function () { return null; }, 1337);
+                        _e.label = 6;
+                    case 6:
+                        _i++;
+                        return [3 /*break*/, 4];
+                    case 7:
+                        _d = clickProportional;
+                        return [4 /*yield*/, waitForElement(THREE_BY_THREE_CONFIRM_BUTTON)];
+                    case 8:
+                        _d.apply(void 0, [_e.sent(), 0.69, 0.420]);
                         return [2 /*return*/];
                 }
             });
@@ -881,13 +967,19 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         return objects;
     }
     function refreshSemanticShapes() {
-        var refreshButton = document
-            .querySelector("iframe")
-            .contentWindow
-            .document
-            .querySelector(SEMANTIC_SHAPES_REFRESH_BUTTON);
-        clickCenterOfElement(refreshButton);
-        setTimeout(function () { return null; }, 3000);
+        return __awaiter(this, void 0, void 0, function () {
+            var refreshButton;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, waitForElement(SEMANTIC_SHAPES_REFRESH_BUTTON)];
+                    case 1:
+                        refreshButton = _a.sent();
+                        clickCenterOfElement(refreshButton);
+                        setTimeout(function () { return null; }, 3000);
+                        return [2 /*return*/];
+                }
+            });
+        });
     }
     function captchaIsPresent() {
         for (var i = 0; i < CAPTCHA_PRESENCE_INDICATORS.length; i++) {
