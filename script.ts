@@ -26,13 +26,16 @@ interface Request {
 		}
 	)
 
-	let creditsUrl = "https://www.sadcaptcha.com/api/v1/license/credits?licenseKey="
-	let arcedSlideUrl = "https://www.sadcaptcha.com/api/v1/temu-arced-slide?licenseKey="
-	let threeByThreeUrl = "https://www.sadcaptcha.com/api/v1/temu-three-by-three?licenseKey="
-	let puzzleUrl = "https://www.sadcaptcha.com/api/v1/puzzle?licenseKey="
-	let semanticShapesUrl = "https://www.sadcaptcha.com/api/v1/semantic-shapes?licenseKey="
+	const CREDITS_URL = "https://www.sadcaptcha.com/api/v1/license/credits?licenseKey="
+	const ARCED_SLIDE_URL = "https://www.sadcaptcha.com/api/v1/temu-arced-slide?licenseKey="
+	const THREE_BY_THREE_URL = "https://www.sadcaptcha.com/api/v1/temu-three-by-three?licenseKey="
+	const PUZZLE_URL = "https://www.sadcaptcha.com/api/v1/puzzle?licenseKey="
+	const SEMANTIC_SHAPES_URL = "https://www.sadcaptcha.com/api/v1/semantic-shapes?licenseKey="
+	const TWO_IMAGE_URL = "https://www.sadcaptcha.com/api/v1/temu-two-image?licenseKey="
 
 	const API_HEADERS = new Headers({ "Content-Type": "application/json" })
+
+	const ELEMENTS_INSIDE_CHALLENGE_SELECTOR = "#Picture *"
 
 	const ARCED_SLIDE_PUZZLE_IMAGE_SELECTOR = "#slider > img"
 	const ARCED_SLIDE_PIECE_CONTAINER_SELECTOR = "#img-button"
@@ -49,12 +52,24 @@ interface Request {
 	const SEMANTIC_SHAPES_CHALLENGE_TEXT = ".picture-text-2Alt0, div._2Alt0zsN"
 	const SEMANTIC_SHAPES_IMAGE = "#captchaImg"
 	const SEMANTIC_SHAPES_REFRESH_BUTTON = ".refresh-27d6x, .ZVIQM964"
-	const SEMANTIC_SHAPES_UNIQUE_IDENTIFIERS = [SEMANTIC_SHAPES_IMAGE, "#captchaImg"]
+	const SEMANTIC_SHAPES_UNIQUE_IDENTIFIERS = [SEMANTIC_SHAPES_CHALLENGE_TEXT]
 
 	const THREE_BY_THREE_IMAGE = "img.loaded"
 	const THREE_BY_THREE_TEXT = ".verifyDialog div[role=dialog]"
 	const THREE_BY_THREE_CONFIRM_BUTTON = ".verifyDialog div[role=button]:has(span)"
 	const THREE_BY_THREE_UNIQUE_IDENTIFIERS = ["#imageSemantics img.loaded"]
+
+	const TWO_IMAGE_FIRST_IMAGE = "div[class^=picWrap] div[class^=firstPic] #captchaImg"
+	const TWO_IMAGE_SECOND_IMAGE = "div[class^=picWrap] div:not([class^=firstPic]) div:not([class^=firstPic]) #captchaImg"
+	const TWO_IMAGE_CHALLENGE_TEXT = "div[class^=subTitle]"
+	const TWO_IMAGE_CONFIRM_BUTTON = "div[class^=btnWrap] div[role=button]"
+	const TWO_IMAGE_REFRESH_BUTTON = "svg[class^=refreshIcon]"
+	const TWO_IMAGE_UNIQUE_IDENTIFIERS = [TWO_IMAGE_FIRST_IMAGE, TWO_IMAGE_SECOND_IMAGE]
+
+	const TWO_IMAGE_SUPPORTED_CHALLENGES = [
+		"left to right",
+		"right to left"
+	]
 
 	const CAPTCHA_PRESENCE_INDICATORS = [
 		"#slide-button",
@@ -78,8 +93,13 @@ interface Request {
 		proportionY: number
 	}
 
-	type SemanticShapesResponse = {
+	type MultiPointResponse = {
 		proportionalPoints: Array<ProportionalPoint>
+	}
+
+	type TwoImageRequest = {
+		challenge: string
+		images_b64: Array<string>
 	}
 
 	/*
@@ -135,7 +155,9 @@ interface Request {
 		PUZZLE,
 		ARCED_SLIDE,
 		SEMANTIC_SHAPES,
-		THREE_BY_THREE
+		THREE_BY_THREE,
+		SWAP_TWO,
+		TWO_IMAGE
 	}
 
 	function findFirstElementToAppear(selectors: Array<string>): Promise<Element> {
@@ -191,6 +213,8 @@ interface Request {
 				if (ele) {
 					console.log("Selector found: " + selector)
 					return resolve(ele)
+				} else {
+					console.log("no element found in iframe: " + selector)
 				}
 			} else {
 				const observer: MutationObserver = new MutationObserver(_ => {
@@ -263,7 +287,7 @@ interface Request {
 
 	async function creditsApiCall(): Promise<number> {
 		console.log("making api call")
-		let resp = await fetch(creditsUrl + API_KEY, {
+		let resp = await fetch(CREDITS_URL + API_KEY, {
 			method: "GET",
 			headers: API_HEADERS,
 		})
@@ -285,21 +309,21 @@ interface Request {
 	}
 
 	async function threeByThreeApiCall(requestBody: ThreeByThreeCaptchaRequest): Promise<ThreeByThreeCaptchaResponse> {
-		let resp = await apiCall(threeByThreeUrl, requestBody)
+		let resp = await apiCall(THREE_BY_THREE_URL, requestBody)
 		console.dir("got resp to 3x3 api call: ")
 		console.dir(resp)
 		return resp.json()
 	}
 
 	async function arcedSlideApiCall(requestBody: ArcedSlideCaptchaRequest): Promise<number> {
-		let resp = await apiCall(arcedSlideUrl, requestBody)
+		let resp = await apiCall(ARCED_SLIDE_URL, requestBody)
 		let pixelsFromSliderOrigin = (await resp.json()).pixelsFromSliderOrigin
 		console.log("pixels from slider origin = " + pixelsFromSliderOrigin)
 		return pixelsFromSliderOrigin
 	}
 
 	async function puzzleApiCall(puzzleB64: string, pieceB64: string): Promise<number> {
-		let resp = await apiCall(puzzleUrl, {
+		let resp = await apiCall(PUZZLE_URL, {
 			puzzleImageB64: puzzleB64,
 			pieceImageB64: pieceB64
 		})
@@ -308,11 +332,17 @@ interface Request {
 		return slideXProportion
 	}
 
-	async function semanticShapesApiCall(challenge: string, imageB64: string): Promise<SemanticShapesResponse> {
-		let resp = await apiCall(semanticShapesUrl, {
+	async function semanticShapesApiCall(challenge: string, imageB64: string): Promise<MultiPointResponse> {
+		let resp = await apiCall(SEMANTIC_SHAPES_URL, {
 			challenge: challenge,
 			imageB64: imageB64
 		})
+		let data = await resp.json()
+		return data
+	}
+
+	async function twoImageApiCall(requestBody: TwoImageRequest): Promise<MultiPointResponse> {
+		let resp = await apiCall(TWO_IMAGE_URL, requestBody)
 		let data = await resp.json()
 		return data
 	}
@@ -349,6 +379,9 @@ interface Request {
 			} else if (anySelectorInListPresent(SEMANTIC_SHAPES_UNIQUE_IDENTIFIERS)) {
 				console.log("semantic shapes detected")
 				return CaptchaType.SEMANTIC_SHAPES
+			} else if (anySelectorInListPresent(TWO_IMAGE_UNIQUE_IDENTIFIERS)) {
+				console.log("two image detected")
+				return CaptchaType.TWO_IMAGE
 			} else if (anySelectorInListPresent(THREE_BY_THREE_UNIQUE_IDENTIFIERS)) {
 				console.log("3x3 detected")
 				return CaptchaType.THREE_BY_THREE
@@ -376,7 +409,6 @@ interface Request {
 		CONTAINER.dispatchEvent(
 			new MouseEvent("mouseup", {
 				bubbles: true,
-				view: window,
 				clientX: x,
 				clientY: y
 			})
@@ -390,7 +422,6 @@ interface Request {
 			new MouseEvent("mouseover", {
 				cancelable: true,
 				bubbles: true,
-				view: window,
 				clientX: x,
 				clientY: y
 			})
@@ -404,7 +435,6 @@ interface Request {
 			new MouseEvent("mousedown", {
 				cancelable: true,
 				bubbles: true,
-				view: window,
 				clientX: x,
 				clientY: y
 			})
@@ -421,7 +451,6 @@ interface Request {
 				pointerType: "mouse",
 				cancelable: true,
 				bubbles: true,
-				view: window,
 				clientX: width,
 				clientY: centerY
 			})
@@ -430,13 +459,24 @@ interface Request {
 			new MouseEvent("mouseover", {
 				cancelable: true,
 				bubbles: true,
-				view: window,
 				clientX: width,
 				clientY: centerY
 			})
 		)
 		for (let i = 0; i < centerX; i++) {
 			mouseMove(width - i, centerY)
+		}
+	}
+
+	function randomMouseMovement() {
+		let randomX = Math.round(window.innerWidth * Math.random())
+		let randomY = Math.round(window.innerHeight * Math.random())
+		try {
+			mouseMove(randomX, randomX)
+			mouseOver(randomX, randomY)
+		} catch (err) {
+			console.log("error doing random mouse movement: ")
+			console.log(err)
 		}
 	}
 
@@ -452,7 +492,6 @@ interface Request {
 				pointerType: "mouse",
 				cancelable: true,
 				bubbles: true,
-				view: window,
 				clientX: x,
 				clientY: y
 			})
@@ -460,6 +499,24 @@ interface Request {
 		console.log("moved mouse to " + x + ", " + y)
 	}
 
+	/*
+		* Dispatch a simple mouseclick event. 
+		* No x or y, no mouseup or mousedown. 
+		* Just mouseclick
+	*/
+	function mouseClickSimple(element: Element) {
+		const clickEvent = new MouseEvent('click', {
+		  'view': window,
+		  'bubbles': true,
+		  'cancelable': true
+		});
+		element.dispatchEvent(clickEvent)
+		console.log("simple clicked element")
+	}
+
+	/*
+		* Dispatch full pipeline of mouseover, mousedown, mouseup, and mouseclick
+	*/
 	function mouseClick(element: Element, x: number, y: number): void {
 		element.dispatchEvent(
 			new MouseEvent("mouseover", {
@@ -479,6 +536,13 @@ interface Request {
 		setTimeout(() => null, 200)
 		element.dispatchEvent(
 			new MouseEvent("mouseup", {
+				bubbles: true,
+				clientX: x,
+				clientY: y
+			})
+		)
+		element.dispatchEvent(
+			new MouseEvent("mouseclick", {
 				bubbles: true,
 				clientX: x,
 				clientY: y
@@ -583,7 +647,6 @@ interface Request {
 			new MouseEvent("mousedown", {
 				cancelable: true,
 				bubbles: true,
-				view: window,
 				clientX: slideButtonCenter.x, 
 				clientY: slideButtonCenter.y
 			})
@@ -595,7 +658,6 @@ interface Request {
 				new MouseEvent("mousemove", {
 					cancelable: true,
 					bubbles: true,
-					view: window,
 					clientX: slideButtonCenter.x + pixel, 
 					clientY: slideButtonCenter.y - Math.log(pixel + 1)
 				})
@@ -682,6 +744,10 @@ interface Request {
 		let buttonCenter = getElementCenter(sliderButton)
 		let preRequestSlidePixels = 10
 		mouseEnterPage()
+		for (let i = 0; i < 25; i++) {
+			randomMouseMovement()
+			setTimeout(() => null, 1.337)
+		}
 		mouseMove(wrapperCenter.x, wrapperCenter.y)
 		mouseOver(wrapperCenter.x, wrapperCenter.y)
 		await new Promise(r => setTimeout(r, 133.7));
@@ -724,36 +790,44 @@ interface Request {
 	}
 
 	async function solveSemanticShapes(): Promise<void> {
+		mouseEnterPage()
+		for (let i = 0; i < 25; i++) {
+			randomMouseMovement()
+			setTimeout(() => null, 1.337)
+		}
 		let src = await getImageSource(SEMANTIC_SHAPES_IMAGE)
 		let img = getBase64StringFromDataURL(src)
 		let challenge = await getTextContent(SEMANTIC_SHAPES_CHALLENGE_TEXT)
-		let res: SemanticShapesResponse
+		let res: MultiPointResponse
 		try {
 			res = await semanticShapesApiCall(challenge, img)
 		} catch (err) {
 			console.log("Error calling semantic shapes API. refreshing and retrying")
 			console.error(err)
-			await refreshSemanticShapes()
+			mouseClickSimple(await waitForElement(SEMANTIC_SHAPES_REFRESH_BUTTON))
 			await solveSemanticShapes()
 		}
 		let ele = await waitForElement(SEMANTIC_SHAPES_IMAGE)
 		for (const point of res.proportionalPoints) {
-			clickProportional(ele, point.proportionX, point.proportionY)
-			await new Promise(r => setTimeout(r, 1337));
+			let countOfPointsBeforeClicking = await countElementsInsideImageSemanticsChallenge()
+			for (let i = 0; i < 5; i++) {
+				clickProportional(ele, point.proportionX + (i / 50), point.proportionY + (i / 50))
+				await new Promise(r => setTimeout(r, 1337));
+				if (countOfPointsBeforeClicking === await countElementsInsideImageSemanticsChallenge()) {
+					console.log("count of elements inside challenge was the same after clicking. this means no red dot appeared. trying to click again")
+					continue
+				} else {
+					console.log("a new element appeared inside after clicking. continuing to click the rest of the points")
+					break
+				}
+			}
 		}
 		await new Promise(r => setTimeout(r, 3000));
-		let newChallenge = await getTextContent(SEMANTIC_SHAPES_CHALLENGE_TEXT)
-		let challengeDidNotChange = (challenge === newChallenge)
-		if (challengeDidNotChange) {
-			console.log(
-				"It seems that the shapes challenge did not change after clicking the image."
-				+ "This is probably because the solution lies under tha black loading box, "
-				+ "which means it's impossible to click (thanks temu). Refreshing and retrying."
-			)
-			await refreshSemanticShapes()
+		if (captchaIsPresent()) {
+			console.log("captcha was still present, retrying")
+			mouseClickSimple(await waitForElement(SEMANTIC_SHAPES_REFRESH_BUTTON))
 			await solveSemanticShapes()
 		}
-		await new Promise(r => setTimeout(r, 3000));
 	}
 
 	async function solveThreeByThree() {
@@ -777,6 +851,85 @@ interface Request {
 		clickProportional(await waitForElement(THREE_BY_THREE_CONFIRM_BUTTON), 0.69, 0.420)
 	}
 
+	async function solveTwoImage() {
+	//	mouseEnterPage()
+	//	let challengeText = await getTextContent(TWO_IMAGE_CHALLENGE_TEXT)
+	//	while (!twoImageChallengeTextIsSupported(challengeText)) {
+	//		console.log("challenge text is not supported, refreshing and retrying")
+	//		mouseClickSimple(await waitForElement(TWO_IMAGE_REFRESH_BUTTON))
+	//		setTimeout(() => null, 1337)
+	//		//await solveTwoImage()
+	//	}
+	//
+	//	if (!captchaIsPresent) {
+	//		console.log("captcha is not longer present. Must have been solved by a previous recursive call. returning")
+	//		return
+	//	}
+	//
+	//	let firstImage = getBase64StringFromDataURL(await getImageSource(TWO_IMAGE_FIRST_IMAGE))
+	//	let secondImage = getBase64StringFromDataURL(await getImageSource(TWO_IMAGE_SECOND_IMAGE))
+	//
+	//	let request: TwoImageRequest = {
+	//		challenge: challengeText,
+	//		images_b64: [firstImage, secondImage]
+	//	}
+	//
+	//	let resp = await twoImageApiCall(request)
+	//	let targetImageSelector = identifyTwoImageSelectorToClick(challengeText)
+	//	let targetImage = await waitForElement(targetImageSelector)
+	//
+	//	resp.proportionalPoints.forEach(point => {
+	//		clickProportional(targetImage, point.proportionX, point.proportionY)
+	//		setTimeout(() => null, 1337)
+	//	})
+	//
+	//	clickCenterOfElement(await waitForElement(TWO_IMAGE_CONFIRM_BUTTON))
+	//	setTimeout(() => null, 3000)
+	//
+	//	if (captchaIsPresent()) {
+	//		console.log("captcha was still present, retrying")
+	//		mouseClickSimple(await waitForElement(TWO_IMAGE_REFRESH_BUTTON))
+	//		await solveTwoImage()
+	//	}
+	//
+	}
+
+	async function countElementsInsideImageSemanticsChallenge(): Promise<number> {
+		let elements = await waitForAllElements(ELEMENTS_INSIDE_CHALLENGE_SELECTOR)
+		let count = elements.length
+		console.log(`${count} elements present in challenge`)
+		return count
+	}
+
+	function identifyTwoImageSelectorToClick(challengeText: string): string {
+		let lowerText = challengeText.toLowerCase()
+		let figure1Index = lowerText.indexOf("figure 1")
+		let figure2index = lowerText.indexOf("figure 2")
+		if (figure1Index === -1 || figure2index == -1) {
+			throw new Error("Possible issue due to unsupported language. Currently only English is supported. Could not see 'figure 1' or 'figure 2' in challenge text")
+		}
+		if (figure1Index < figure2index) {
+			console.log("challenge is asking us to click the first image")
+			return TWO_IMAGE_FIRST_IMAGE
+		} else {
+			console.log("challenge is asking us to click the second image")
+			return TWO_IMAGE_SECOND_IMAGE
+		}
+	}
+
+	function twoImageChallengeTextIsSupported(challengeText: string): Boolean {
+		for (let text of TWO_IMAGE_SUPPORTED_CHALLENGES) {
+			if (challengeText.includes(text)) {
+				console.log(`Two image challenge text "${challengeText}" is supported.`)
+				return true
+			} else {
+				continue
+			}
+		}
+		console.log(`Two image challenge text "${challengeText}" is not supported.`)
+		return false
+	}
+
 	/*
     * Get the list of objects to select from Temu 3x3 captcha
     * ex:
@@ -789,18 +942,18 @@ interface Request {
 		return objects
 	}
 
-	async function refreshSemanticShapes() {
-			let refreshButton = await waitForElement(SEMANTIC_SHAPES_REFRESH_BUTTON)
-			clickCenterOfElement(refreshButton)
-			setTimeout(() => null, 3000)
-
-	}
-
 	function captchaIsPresent(): boolean {
 		for (let i = 0; i < CAPTCHA_PRESENCE_INDICATORS.length; i++) {
 			if (document.querySelector(CAPTCHA_PRESENCE_INDICATORS[i])) {
 				console.log("captcha present based on selector: " + CAPTCHA_PRESENCE_INDICATORS[i])
 				return true;
+			}
+			if (document.querySelector("iframe")) {
+				let iframe = document.querySelector("iframe")
+				if (iframe.contentWindow.document.querySelector(CAPTCHA_PRESENCE_INDICATORS[i])) {
+					console.log("captcha present based on selector: " + CAPTCHA_PRESENCE_INDICATORS[i])
+					return true;
+				}
 			}
 		}
 		console.log("captcha not present")
@@ -854,6 +1007,9 @@ interface Request {
 						break
 					case CaptchaType.THREE_BY_THREE:
 						await solveThreeByThree()
+						break
+					case CaptchaType.TWO_IMAGE:
+						await solveTwoImage()
 						break
 				}
 			} catch (err) {

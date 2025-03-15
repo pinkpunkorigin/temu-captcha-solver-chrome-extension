@@ -53,12 +53,14 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
             sendResponse({ message: "API key cannot be empty.", success: 0 });
         }
     });
-    var creditsUrl = "https://www.sadcaptcha.com/api/v1/license/credits?licenseKey=";
-    var arcedSlideUrl = "https://www.sadcaptcha.com/api/v1/temu-arced-slide?licenseKey=";
-    var threeByThreeUrl = "https://www.sadcaptcha.com/api/v1/temu-three-by-three?licenseKey=";
-    var puzzleUrl = "https://www.sadcaptcha.com/api/v1/puzzle?licenseKey=";
-    var semanticShapesUrl = "https://www.sadcaptcha.com/api/v1/semantic-shapes?licenseKey=";
+    var CREDITS_URL = "https://www.sadcaptcha.com/api/v1/license/credits?licenseKey=";
+    var ARCED_SLIDE_URL = "https://www.sadcaptcha.com/api/v1/temu-arced-slide?licenseKey=";
+    var THREE_BY_THREE_URL = "https://www.sadcaptcha.com/api/v1/temu-three-by-three?licenseKey=";
+    var PUZZLE_URL = "https://www.sadcaptcha.com/api/v1/puzzle?licenseKey=";
+    var SEMANTIC_SHAPES_URL = "https://www.sadcaptcha.com/api/v1/semantic-shapes?licenseKey=";
+    var TWO_IMAGE_URL = "https://www.sadcaptcha.com/api/v1/temu-two-image?licenseKey=";
     var API_HEADERS = new Headers({ "Content-Type": "application/json" });
+    var ELEMENTS_INSIDE_CHALLENGE_SELECTOR = "#Picture *";
     var ARCED_SLIDE_PUZZLE_IMAGE_SELECTOR = "#slider > img";
     var ARCED_SLIDE_PIECE_CONTAINER_SELECTOR = "#img-button";
     var ARCED_SLIDE_PIECE_IMAGE_SELECTOR = "#img-button > img";
@@ -72,11 +74,21 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     var SEMANTIC_SHAPES_CHALLENGE_TEXT = ".picture-text-2Alt0, div._2Alt0zsN";
     var SEMANTIC_SHAPES_IMAGE = "#captchaImg";
     var SEMANTIC_SHAPES_REFRESH_BUTTON = ".refresh-27d6x, .ZVIQM964";
-    var SEMANTIC_SHAPES_UNIQUE_IDENTIFIERS = [SEMANTIC_SHAPES_IMAGE, "#captchaImg"];
+    var SEMANTIC_SHAPES_UNIQUE_IDENTIFIERS = [SEMANTIC_SHAPES_CHALLENGE_TEXT];
     var THREE_BY_THREE_IMAGE = "img.loaded";
     var THREE_BY_THREE_TEXT = ".verifyDialog div[role=dialog]";
     var THREE_BY_THREE_CONFIRM_BUTTON = ".verifyDialog div[role=button]:has(span)";
     var THREE_BY_THREE_UNIQUE_IDENTIFIERS = ["#imageSemantics img.loaded"];
+    var TWO_IMAGE_FIRST_IMAGE = "div[class^=picWrap] div[class^=firstPic] #captchaImg";
+    var TWO_IMAGE_SECOND_IMAGE = "div[class^=picWrap] div:not([class^=firstPic]) div:not([class^=firstPic]) #captchaImg";
+    var TWO_IMAGE_CHALLENGE_TEXT = "div[class^=subTitle]";
+    var TWO_IMAGE_CONFIRM_BUTTON = "div[class^=btnWrap] div[role=button]";
+    var TWO_IMAGE_REFRESH_BUTTON = "svg[class^=refreshIcon]";
+    var TWO_IMAGE_UNIQUE_IDENTIFIERS = [TWO_IMAGE_FIRST_IMAGE, TWO_IMAGE_SECOND_IMAGE];
+    var TWO_IMAGE_SUPPORTED_CHALLENGES = [
+        "left to right",
+        "right to left"
+    ];
     var CAPTCHA_PRESENCE_INDICATORS = [
         "#slide-button",
         "#Slider",
@@ -94,6 +106,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         CaptchaType[CaptchaType["ARCED_SLIDE"] = 1] = "ARCED_SLIDE";
         CaptchaType[CaptchaType["SEMANTIC_SHAPES"] = 2] = "SEMANTIC_SHAPES";
         CaptchaType[CaptchaType["THREE_BY_THREE"] = 3] = "THREE_BY_THREE";
+        CaptchaType[CaptchaType["SWAP_TWO"] = 4] = "SWAP_TWO";
+        CaptchaType[CaptchaType["TWO_IMAGE"] = 5] = "TWO_IMAGE";
     })(CaptchaType || (CaptchaType = {}));
     function findFirstElementToAppear(selectors) {
         return new Promise(function (resolve) {
@@ -163,6 +177,9 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                 if (ele) {
                     console.log("Selector found: " + selector);
                     return resolve(ele);
+                }
+                else {
+                    console.log("no element found in iframe: " + selector);
                 }
             }
             else {
@@ -249,7 +266,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                 switch (_a.label) {
                     case 0:
                         console.log("making api call");
-                        return [4 /*yield*/, fetch(creditsUrl + API_KEY, {
+                        return [4 /*yield*/, fetch(CREDITS_URL + API_KEY, {
                                 method: "GET",
                                 headers: API_HEADERS,
                             })];
@@ -290,7 +307,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
             var resp;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, apiCall(threeByThreeUrl, requestBody)];
+                    case 0: return [4 /*yield*/, apiCall(THREE_BY_THREE_URL, requestBody)];
                     case 1:
                         resp = _a.sent();
                         console.dir("got resp to 3x3 api call: ");
@@ -305,7 +322,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
             var resp, pixelsFromSliderOrigin;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, apiCall(arcedSlideUrl, requestBody)];
+                    case 0: return [4 /*yield*/, apiCall(ARCED_SLIDE_URL, requestBody)];
                     case 1:
                         resp = _a.sent();
                         return [4 /*yield*/, resp.json()];
@@ -322,7 +339,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
             var resp, slideXProportion;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, apiCall(puzzleUrl, {
+                    case 0: return [4 /*yield*/, apiCall(PUZZLE_URL, {
                             puzzleImageB64: puzzleB64,
                             pieceImageB64: pieceB64
                         })];
@@ -342,10 +359,26 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
             var resp, data;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, apiCall(semanticShapesUrl, {
+                    case 0: return [4 /*yield*/, apiCall(SEMANTIC_SHAPES_URL, {
                             challenge: challenge,
                             imageB64: imageB64
                         })];
+                    case 1:
+                        resp = _a.sent();
+                        return [4 /*yield*/, resp.json()];
+                    case 2:
+                        data = _a.sent();
+                        return [2 /*return*/, data];
+                }
+            });
+        });
+    }
+    function twoImageApiCall(requestBody) {
+        return __awaiter(this, void 0, void 0, function () {
+            var resp, data;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, apiCall(TWO_IMAGE_URL, requestBody)];
                     case 1:
                         resp = _a.sent();
                         return [4 /*yield*/, resp.json()];
@@ -386,7 +419,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                         i = 0;
                         _a.label = 1;
                     case 1:
-                        if (!(i < 30)) return [3 /*break*/, 8];
+                        if (!(i < 30)) return [3 /*break*/, 9];
                         if (!anySelectorInListPresent(ARCED_SLIDE_UNIQUE_IDENTIFIERS)) return [3 /*break*/, 2];
                         console.log("arced slide detected");
                         return [2 /*return*/, CaptchaType.ARCED_SLIDE];
@@ -399,17 +432,21 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                         console.log("semantic shapes detected");
                         return [2 /*return*/, CaptchaType.SEMANTIC_SHAPES];
                     case 4:
-                        if (!anySelectorInListPresent(THREE_BY_THREE_UNIQUE_IDENTIFIERS)) return [3 /*break*/, 5];
+                        if (!anySelectorInListPresent(TWO_IMAGE_UNIQUE_IDENTIFIERS)) return [3 /*break*/, 5];
+                        console.log("two image detected");
+                        return [2 /*return*/, CaptchaType.TWO_IMAGE];
+                    case 5:
+                        if (!anySelectorInListPresent(THREE_BY_THREE_UNIQUE_IDENTIFIERS)) return [3 /*break*/, 6];
                         console.log("3x3 detected");
                         return [2 /*return*/, CaptchaType.THREE_BY_THREE];
-                    case 5: return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 1000); })];
-                    case 6:
-                        _a.sent();
-                        _a.label = 7;
+                    case 6: return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 1000); })];
                     case 7:
+                        _a.sent();
+                        _a.label = 8;
+                    case 8:
                         i++;
                         return [3 /*break*/, 1];
-                    case 8: throw new Error("Could not identify CaptchaType");
+                    case 9: throw new Error("Could not identify CaptchaType");
                 }
             });
         });
@@ -437,7 +474,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function mouseUp(x, y) {
         CONTAINER.dispatchEvent(new MouseEvent("mouseup", {
             bubbles: true,
-            view: window,
             clientX: x,
             clientY: y
         }));
@@ -448,7 +484,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         underMouse.dispatchEvent(new MouseEvent("mouseover", {
             cancelable: true,
             bubbles: true,
-            view: window,
             clientX: x,
             clientY: y
         }));
@@ -459,7 +494,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         underMouse.dispatchEvent(new MouseEvent("mousedown", {
             cancelable: true,
             bubbles: true,
-            view: window,
             clientX: x,
             clientY: y
         }));
@@ -473,19 +507,29 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
             pointerType: "mouse",
             cancelable: true,
             bubbles: true,
-            view: window,
             clientX: width,
             clientY: centerY
         }));
         CONTAINER.dispatchEvent(new MouseEvent("mouseover", {
             cancelable: true,
             bubbles: true,
-            view: window,
             clientX: width,
             clientY: centerY
         }));
         for (var i = 0; i < centerX; i++) {
             mouseMove(width - i, centerY);
+        }
+    }
+    function randomMouseMovement() {
+        var randomX = Math.round(window.innerWidth * Math.random());
+        var randomY = Math.round(window.innerHeight * Math.random());
+        try {
+            mouseMove(randomX, randomX);
+            mouseOver(randomX, randomY);
+        }
+        catch (err) {
+            console.log("error doing random mouse movement: ");
+            console.log(err);
         }
     }
     function mouseMove(x, y, ele) {
@@ -500,12 +544,28 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
             pointerType: "mouse",
             cancelable: true,
             bubbles: true,
-            view: window,
             clientX: x,
             clientY: y
         }));
         console.log("moved mouse to " + x + ", " + y);
     }
+    /*
+        * Dispatch a simple mouseclick event.
+        * No x or y, no mouseup or mousedown.
+        * Just mouseclick
+    */
+    function mouseClickSimple(element) {
+        var clickEvent = new MouseEvent('click', {
+            'view': window,
+            'bubbles': true,
+            'cancelable': true
+        });
+        element.dispatchEvent(clickEvent);
+        console.log("simple clicked element");
+    }
+    /*
+        * Dispatch full pipeline of mouseover, mousedown, mouseup, and mouseclick
+    */
     function mouseClick(element, x, y) {
         element.dispatchEvent(new MouseEvent("mouseover", {
             bubbles: true,
@@ -520,6 +580,11 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         }));
         setTimeout(function () { return null; }, 200);
         element.dispatchEvent(new MouseEvent("mouseup", {
+            bubbles: true,
+            clientX: x,
+            clientY: y
+        }));
+        element.dispatchEvent(new MouseEvent("mouseclick", {
             bubbles: true,
             clientX: x,
             clientY: y
@@ -648,7 +713,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                         slideButton.dispatchEvent(new MouseEvent("mousedown", {
                             cancelable: true,
                             bubbles: true,
-                            view: window,
                             clientX: slideButtonCenter.x,
                             clientY: slideButtonCenter.y
                         }));
@@ -663,7 +727,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                         slideButton.dispatchEvent(new MouseEvent("mousemove", {
                             cancelable: true,
                             bubbles: true,
-                            view: window,
                             clientX: slideButtonCenter.x + pixel,
                             clientY: slideButtonCenter.y - Math.log(pixel + 1)
                         }));
@@ -739,7 +802,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
     function solvePuzzle() {
         return __awaiter(this, void 0, void 0, function () {
-            var sliderWrapper, sliderButton, wrapperCenter, buttonCenter, preRequestSlidePixels, i, puzzleSrc, pieceSrc, puzzleImg, pieceImg, solution, puzzleImageEle, distance, currentX, currentY, i;
+            var sliderWrapper, sliderButton, wrapperCenter, buttonCenter, preRequestSlidePixels, i, i, puzzleSrc, pieceSrc, puzzleImg, pieceImg, solution, puzzleImageEle, distance, currentX, currentY, i;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0: return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 3000); })];
@@ -755,6 +818,10 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                         buttonCenter = getElementCenter(sliderButton);
                         preRequestSlidePixels = 10;
                         mouseEnterPage();
+                        for (i = 0; i < 25; i++) {
+                            randomMouseMovement();
+                            setTimeout(function () { return null; }, 1.337);
+                        }
                         mouseMove(wrapperCenter.x, wrapperCenter.y);
                         mouseOver(wrapperCenter.x, wrapperCenter.y);
                         return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 133.7); })];
@@ -832,72 +899,92 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
     function solveSemanticShapes() {
         return __awaiter(this, void 0, void 0, function () {
-            var src, img, challenge, res, err_1, ele, _i, _a, point, newChallenge, challengeDidNotChange;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0: return [4 /*yield*/, getImageSource(SEMANTIC_SHAPES_IMAGE)];
+            var i, src, img, challenge, res, err_1, _a, ele, _i, _b, point, countOfPointsBeforeClicking, i, _c, _d;
+            return __generator(this, function (_e) {
+                switch (_e.label) {
+                    case 0:
+                        mouseEnterPage();
+                        for (i = 0; i < 25; i++) {
+                            randomMouseMovement();
+                            setTimeout(function () { return null; }, 1.337);
+                        }
+                        return [4 /*yield*/, getImageSource(SEMANTIC_SHAPES_IMAGE)];
                     case 1:
-                        src = _b.sent();
+                        src = _e.sent();
                         img = getBase64StringFromDataURL(src);
                         return [4 /*yield*/, getTextContent(SEMANTIC_SHAPES_CHALLENGE_TEXT)];
                     case 2:
-                        challenge = _b.sent();
-                        _b.label = 3;
+                        challenge = _e.sent();
+                        _e.label = 3;
                     case 3:
-                        _b.trys.push([3, 5, , 8]);
+                        _e.trys.push([3, 5, , 8]);
                         return [4 /*yield*/, semanticShapesApiCall(challenge, img)];
                     case 4:
-                        res = _b.sent();
+                        res = _e.sent();
                         return [3 /*break*/, 8];
                     case 5:
-                        err_1 = _b.sent();
+                        err_1 = _e.sent();
                         console.log("Error calling semantic shapes API. refreshing and retrying");
                         console.error(err_1);
-                        return [4 /*yield*/, refreshSemanticShapes()];
+                        _a = mouseClickSimple;
+                        return [4 /*yield*/, waitForElement(SEMANTIC_SHAPES_REFRESH_BUTTON)];
                     case 6:
-                        _b.sent();
+                        _a.apply(void 0, [_e.sent()]);
                         return [4 /*yield*/, solveSemanticShapes()];
                     case 7:
-                        _b.sent();
+                        _e.sent();
                         return [3 /*break*/, 8];
                     case 8: return [4 /*yield*/, waitForElement(SEMANTIC_SHAPES_IMAGE)];
                     case 9:
-                        ele = _b.sent();
-                        _i = 0, _a = res.proportionalPoints;
-                        _b.label = 10;
+                        ele = _e.sent();
+                        _i = 0, _b = res.proportionalPoints;
+                        _e.label = 10;
                     case 10:
-                        if (!(_i < _a.length)) return [3 /*break*/, 13];
-                        point = _a[_i];
-                        clickProportional(ele, point.proportionX, point.proportionY);
-                        return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 1337); })];
+                        if (!(_i < _b.length)) return [3 /*break*/, 17];
+                        point = _b[_i];
+                        return [4 /*yield*/, countElementsInsideImageSemanticsChallenge()];
                     case 11:
-                        _b.sent();
-                        _b.label = 12;
+                        countOfPointsBeforeClicking = _e.sent();
+                        i = 0;
+                        _e.label = 12;
                     case 12:
+                        if (!(i < 5)) return [3 /*break*/, 16];
+                        clickProportional(ele, point.proportionX + (i / 50), point.proportionY + (i / 50));
+                        return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 1337); })];
+                    case 13:
+                        _e.sent();
+                        _c = countOfPointsBeforeClicking;
+                        return [4 /*yield*/, countElementsInsideImageSemanticsChallenge()];
+                    case 14:
+                        if (_c === (_e.sent())) {
+                            console.log("count of elements inside challenge was the same after clicking. this means no red dot appeared. trying to click again");
+                            return [3 /*break*/, 15];
+                        }
+                        else {
+                            console.log("a new element appeared inside after clicking. continuing to click the rest of the points");
+                            return [3 /*break*/, 16];
+                        }
+                        _e.label = 15;
+                    case 15:
+                        i++;
+                        return [3 /*break*/, 12];
+                    case 16:
                         _i++;
                         return [3 /*break*/, 10];
-                    case 13: return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 3000); })];
-                    case 14:
-                        _b.sent();
-                        return [4 /*yield*/, getTextContent(SEMANTIC_SHAPES_CHALLENGE_TEXT)];
-                    case 15:
-                        newChallenge = _b.sent();
-                        challengeDidNotChange = (challenge === newChallenge);
-                        if (!challengeDidNotChange) return [3 /*break*/, 18];
-                        console.log("It seems that the shapes challenge did not change after clicking the image."
-                            + "This is probably because the solution lies under tha black loading box, "
-                            + "which means it's impossible to click (thanks temu). Refreshing and retrying.");
-                        return [4 /*yield*/, refreshSemanticShapes()];
-                    case 16:
-                        _b.sent();
-                        return [4 /*yield*/, solveSemanticShapes()];
-                    case 17:
-                        _b.sent();
-                        _b.label = 18;
-                    case 18: return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 3000); })];
+                    case 17: return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 3000); })];
+                    case 18:
+                        _e.sent();
+                        if (!captchaIsPresent()) return [3 /*break*/, 21];
+                        console.log("captcha was still present, retrying");
+                        _d = mouseClickSimple;
+                        return [4 /*yield*/, waitForElement(SEMANTIC_SHAPES_REFRESH_BUTTON)];
                     case 19:
-                        _b.sent();
-                        return [2 /*return*/];
+                        _d.apply(void 0, [_e.sent()]);
+                        return [4 /*yield*/, solveSemanticShapes()];
+                    case 20:
+                        _e.sent();
+                        _e.label = 21;
+                    case 21: return [2 /*return*/];
                 }
             });
         });
@@ -955,6 +1042,58 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
             });
         });
     }
+    function solveTwoImage() {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                return [2 /*return*/];
+            });
+        });
+    }
+    function countElementsInsideImageSemanticsChallenge() {
+        return __awaiter(this, void 0, void 0, function () {
+            var elements, count;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, waitForAllElements(ELEMENTS_INSIDE_CHALLENGE_SELECTOR)];
+                    case 1:
+                        elements = _a.sent();
+                        count = elements.length;
+                        console.log("".concat(count, " elements present in challenge"));
+                        return [2 /*return*/, count];
+                }
+            });
+        });
+    }
+    function identifyTwoImageSelectorToClick(challengeText) {
+        var lowerText = challengeText.toLowerCase();
+        var figure1Index = lowerText.indexOf("figure 1");
+        var figure2index = lowerText.indexOf("figure 2");
+        if (figure1Index === -1 || figure2index == -1) {
+            throw new Error("Possible issue due to unsupported language. Currently only English is supported. Could not see 'figure 1' or 'figure 2' in challenge text");
+        }
+        if (figure1Index < figure2index) {
+            console.log("challenge is asking us to click the first image");
+            return TWO_IMAGE_FIRST_IMAGE;
+        }
+        else {
+            console.log("challenge is asking us to click the second image");
+            return TWO_IMAGE_SECOND_IMAGE;
+        }
+    }
+    function twoImageChallengeTextIsSupported(challengeText) {
+        for (var _i = 0, TWO_IMAGE_SUPPORTED_CHALLENGES_1 = TWO_IMAGE_SUPPORTED_CHALLENGES; _i < TWO_IMAGE_SUPPORTED_CHALLENGES_1.length; _i++) {
+            var text = TWO_IMAGE_SUPPORTED_CHALLENGES_1[_i];
+            if (challengeText.includes(text)) {
+                console.log("Two image challenge text \"".concat(challengeText, "\" is supported."));
+                return true;
+            }
+            else {
+                continue;
+            }
+        }
+        console.log("Two image challenge text \"".concat(challengeText, "\" is not supported."));
+        return false;
+    }
     /*
     * Get the list of objects to select from Temu 3x3 captcha
     * ex:
@@ -966,26 +1105,18 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         console.log("input text: ".concat(challengeText, "\nobjects of interest: ").concat(objects));
         return objects;
     }
-    function refreshSemanticShapes() {
-        return __awaiter(this, void 0, void 0, function () {
-            var refreshButton;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, waitForElement(SEMANTIC_SHAPES_REFRESH_BUTTON)];
-                    case 1:
-                        refreshButton = _a.sent();
-                        clickCenterOfElement(refreshButton);
-                        setTimeout(function () { return null; }, 3000);
-                        return [2 /*return*/];
-                }
-            });
-        });
-    }
     function captchaIsPresent() {
         for (var i = 0; i < CAPTCHA_PRESENCE_INDICATORS.length; i++) {
             if (document.querySelector(CAPTCHA_PRESENCE_INDICATORS[i])) {
                 console.log("captcha present based on selector: " + CAPTCHA_PRESENCE_INDICATORS[i]);
                 return true;
+            }
+            if (document.querySelector("iframe")) {
+                var iframe = document.querySelector("iframe");
+                if (iframe.contentWindow.document.querySelector(CAPTCHA_PRESENCE_INDICATORS[i])) {
+                    console.log("captcha present based on selector: " + CAPTCHA_PRESENCE_INDICATORS[i]);
+                    return true;
+                }
             }
         }
         console.log("captcha not present");
@@ -998,7 +1129,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
-                        if (!!isCurrentSolve) return [3 /*break*/, 25];
+                        if (!!isCurrentSolve) return [3 /*break*/, 27];
                         if (!captchaIsPresent()) return [3 /*break*/, 1];
                         console.log("captcha detected by css selector");
                         return [3 /*break*/, 3];
@@ -1044,48 +1175,53 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                         console.log("proceeding to attempt solution anyways");
                         return [3 /*break*/, 11];
                     case 11:
-                        _b.trys.push([11, 21, 22, 25]);
+                        _b.trys.push([11, 23, 24, 27]);
                         _a = captchaType;
                         switch (_a) {
                             case CaptchaType.PUZZLE: return [3 /*break*/, 12];
                             case CaptchaType.ARCED_SLIDE: return [3 /*break*/, 14];
                             case CaptchaType.SEMANTIC_SHAPES: return [3 /*break*/, 16];
                             case CaptchaType.THREE_BY_THREE: return [3 /*break*/, 18];
+                            case CaptchaType.TWO_IMAGE: return [3 /*break*/, 20];
                         }
-                        return [3 /*break*/, 20];
+                        return [3 /*break*/, 22];
                     case 12: return [4 /*yield*/, solvePuzzle()];
                     case 13:
                         _b.sent();
-                        return [3 /*break*/, 20];
+                        return [3 /*break*/, 22];
                     case 14: return [4 /*yield*/, solveArcedSlide()];
                     case 15:
                         _b.sent();
-                        return [3 /*break*/, 20];
+                        return [3 /*break*/, 22];
                     case 16: return [4 /*yield*/, solveSemanticShapes()];
                     case 17:
                         _b.sent();
-                        return [3 /*break*/, 20];
+                        return [3 /*break*/, 22];
                     case 18: return [4 /*yield*/, solveThreeByThree()];
                     case 19:
                         _b.sent();
-                        return [3 /*break*/, 20];
-                    case 20: return [3 /*break*/, 25];
+                        return [3 /*break*/, 22];
+                    case 20: return [4 /*yield*/, solveTwoImage()];
                     case 21:
+                        _b.sent();
+                        return [3 /*break*/, 22];
+                    case 22: return [3 /*break*/, 27];
+                    case 23:
                         err_3 = _b.sent();
                         console.log("error solving captcha");
                         console.error(err_3);
                         console.log("restarting captcha loop");
-                        return [3 /*break*/, 25];
-                    case 22:
+                        return [3 /*break*/, 27];
+                    case 24:
                         isCurrentSolve = false;
                         return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 5000); })];
-                    case 23:
+                    case 25:
                         _b.sent();
                         return [4 /*yield*/, solveCaptchaLoop()];
-                    case 24:
+                    case 26:
                         _b.sent();
                         return [7 /*endfinally*/];
-                    case 25: return [2 /*return*/];
+                    case 27: return [2 /*return*/];
                 }
             });
         });
