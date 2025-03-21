@@ -789,11 +789,27 @@ interface Request {
 		await new Promise(r => setTimeout(r, 3000));
 	}
 
+	async function refreshSemanticShapes() {
+		let srcBefore = await getImageSource(SEMANTIC_SHAPES_IMAGE)
+		mouseClickSimple(await waitForElement(SEMANTIC_SHAPES_REFRESH_BUTTON))
+		for (let i = 0; i < 10; i++) {
+			if (await getImageSource(SEMANTIC_SHAPES_IMAGE) === srcBefore) {
+				console.log("waiting for refresh...")
+				await new Promise(r => setTimeout(r, 500));
+				continue;
+			} else {
+				console.log("refresh complete")
+				return;
+			}
+		}
+		throw new Error("clicked and waited for refresh, but refresh never happened")
+	}
+
 	async function solveSemanticShapes(): Promise<void> {
 		mouseEnterPage()
 		for (let i = 0; i < 25; i++) {
 			randomMouseMovement()
-			setTimeout(() => null, 1.337)
+			await new Promise(resolve => setTimeout(resolve, 1.337));
 		}
 		let src = await getImageSource(SEMANTIC_SHAPES_IMAGE)
 		let img = getBase64StringFromDataURL(src)
@@ -804,7 +820,7 @@ interface Request {
 		} catch (err) {
 			console.log("Error calling semantic shapes API. refreshing and retrying")
 			console.error(err)
-			mouseClickSimple(await waitForElement(SEMANTIC_SHAPES_REFRESH_BUTTON))
+			await refreshSemanticShapes()
 			await solveSemanticShapes()
 		}
 		let ele = await waitForElement(SEMANTIC_SHAPES_IMAGE)
@@ -812,7 +828,7 @@ interface Request {
 			let countOfPointsBeforeClicking = await countElementsInsideImageSemanticsChallenge()
 			for (let i = 0; i < 5; i++) {
 				clickProportional(ele, point.proportionX + (i / 50), point.proportionY + (i / 50))
-				await new Promise(r => setTimeout(r, 1337));
+				await new Promise(resolve => setTimeout(resolve, 1337));
 				if (countOfPointsBeforeClicking === await countElementsInsideImageSemanticsChallenge()) {
 					console.log("count of elements inside challenge was the same after clicking. this means no red dot appeared. trying to click again")
 					continue
@@ -825,7 +841,7 @@ interface Request {
 		await new Promise(r => setTimeout(r, 3000));
 		if (captchaIsPresent()) {
 			console.log("captcha was still present, retrying")
-			mouseClickSimple(await waitForElement(SEMANTIC_SHAPES_REFRESH_BUTTON))
+			await refreshSemanticShapes()
 			await solveSemanticShapes()
 		}
 	}
@@ -852,46 +868,47 @@ interface Request {
 	}
 
 	async function solveTwoImage() {
-	//	mouseEnterPage()
-	//	let challengeText = await getTextContent(TWO_IMAGE_CHALLENGE_TEXT)
-	//	while (!twoImageChallengeTextIsSupported(challengeText)) {
-	//		console.log("challenge text is not supported, refreshing and retrying")
-	//		mouseClickSimple(await waitForElement(TWO_IMAGE_REFRESH_BUTTON))
-	//		setTimeout(() => null, 1337)
-	//		//await solveTwoImage()
-	//	}
-	//
-	//	if (!captchaIsPresent) {
-	//		console.log("captcha is not longer present. Must have been solved by a previous recursive call. returning")
-	//		return
-	//	}
-	//
-	//	let firstImage = getBase64StringFromDataURL(await getImageSource(TWO_IMAGE_FIRST_IMAGE))
-	//	let secondImage = getBase64StringFromDataURL(await getImageSource(TWO_IMAGE_SECOND_IMAGE))
-	//
-	//	let request: TwoImageRequest = {
-	//		challenge: challengeText,
-	//		images_b64: [firstImage, secondImage]
-	//	}
-	//
-	//	let resp = await twoImageApiCall(request)
-	//	let targetImageSelector = identifyTwoImageSelectorToClick(challengeText)
-	//	let targetImage = await waitForElement(targetImageSelector)
-	//
-	//	resp.proportionalPoints.forEach(point => {
-	//		clickProportional(targetImage, point.proportionX, point.proportionY)
-	//		setTimeout(() => null, 1337)
-	//	})
-	//
-	//	clickCenterOfElement(await waitForElement(TWO_IMAGE_CONFIRM_BUTTON))
-	//	setTimeout(() => null, 3000)
-	//
-	//	if (captchaIsPresent()) {
-	//		console.log("captcha was still present, retrying")
-	//		mouseClickSimple(await waitForElement(TWO_IMAGE_REFRESH_BUTTON))
-	//		await solveTwoImage()
-	//	}
-	//
+		//mouseEnterPage()
+		let challengeText = await getTextContent(TWO_IMAGE_CHALLENGE_TEXT)
+		while (!twoImageChallengeTextIsSupported(challengeText)) {
+			console.log("challenge text is not supported, refreshing and retrying")
+			mouseClickSimple(await waitForElement(TWO_IMAGE_REFRESH_BUTTON))
+			await new Promise(resolve => setTimeout(resolve, 3000));
+			challengeText = await getTextContent(TWO_IMAGE_CHALLENGE_TEXT)
+		}
+
+		if (!captchaIsPresent) {
+			console.log("captcha is not longer present. Must have been solved by a previous recursive call. returning")
+			return
+		}
+
+		let firstImage = getBase64StringFromDataURL(await getImageSource(TWO_IMAGE_FIRST_IMAGE))
+		let secondImage = getBase64StringFromDataURL(await getImageSource(TWO_IMAGE_SECOND_IMAGE))
+
+		let request: TwoImageRequest = {
+			challenge: challengeText,
+			images_b64: [firstImage, secondImage]
+		}
+
+		let resp = await twoImageApiCall(request)
+		let targetImageSelector = identifyTwoImageSelectorToClick(challengeText)
+		let targetImage = await waitForElement(targetImageSelector)
+
+		for (const point of resp.proportionalPoints) {
+			clickProportional(targetImage, point.proportionX, point.proportionY)
+			await new Promise(resolve => setTimeout(resolve, 1337));
+		}
+
+		clickCenterOfElement(await waitForElement(TWO_IMAGE_CONFIRM_BUTTON))
+		await new Promise(resolve => setTimeout(resolve, 3000));
+
+		if (captchaIsPresent()) {
+			console.log("captcha was still present, retrying")
+			mouseClickSimple(await waitForElement(TWO_IMAGE_REFRESH_BUTTON))
+			await new Promise(resolve => setTimeout(resolve, 3000));
+			await solveTwoImage()
+		}
+
 	}
 
 	async function countElementsInsideImageSemanticsChallenge(): Promise<number> {

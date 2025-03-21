@@ -897,94 +897,135 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
             });
         });
     }
-    function solveSemanticShapes() {
+    function refreshSemanticShapes() {
         return __awaiter(this, void 0, void 0, function () {
-            var i, src, img, challenge, res, err_1, _a, ele, _i, _b, point, countOfPointsBeforeClicking, i, _c, _d;
-            return __generator(this, function (_e) {
-                switch (_e.label) {
-                    case 0:
-                        mouseEnterPage();
-                        for (i = 0; i < 25; i++) {
-                            randomMouseMovement();
-                            setTimeout(function () { return null; }, 1.337);
-                        }
-                        return [4 /*yield*/, getImageSource(SEMANTIC_SHAPES_IMAGE)];
+            var srcBefore, _a, i;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0: return [4 /*yield*/, getImageSource(SEMANTIC_SHAPES_IMAGE)];
                     case 1:
-                        src = _e.sent();
-                        img = getBase64StringFromDataURL(src);
-                        return [4 /*yield*/, getTextContent(SEMANTIC_SHAPES_CHALLENGE_TEXT)];
-                    case 2:
-                        challenge = _e.sent();
-                        _e.label = 3;
-                    case 3:
-                        _e.trys.push([3, 5, , 8]);
-                        return [4 /*yield*/, semanticShapesApiCall(challenge, img)];
-                    case 4:
-                        res = _e.sent();
-                        return [3 /*break*/, 8];
-                    case 5:
-                        err_1 = _e.sent();
-                        console.log("Error calling semantic shapes API. refreshing and retrying");
-                        console.error(err_1);
+                        srcBefore = _b.sent();
                         _a = mouseClickSimple;
                         return [4 /*yield*/, waitForElement(SEMANTIC_SHAPES_REFRESH_BUTTON)];
-                    case 6:
-                        _a.apply(void 0, [_e.sent()]);
-                        return [4 /*yield*/, solveSemanticShapes()];
-                    case 7:
-                        _e.sent();
-                        return [3 /*break*/, 8];
-                    case 8: return [4 /*yield*/, waitForElement(SEMANTIC_SHAPES_IMAGE)];
-                    case 9:
-                        ele = _e.sent();
-                        _i = 0, _b = res.proportionalPoints;
-                        _e.label = 10;
-                    case 10:
-                        if (!(_i < _b.length)) return [3 /*break*/, 17];
-                        point = _b[_i];
-                        return [4 /*yield*/, countElementsInsideImageSemanticsChallenge()];
-                    case 11:
-                        countOfPointsBeforeClicking = _e.sent();
+                    case 2:
+                        _a.apply(void 0, [_b.sent()]);
                         i = 0;
-                        _e.label = 12;
-                    case 12:
-                        if (!(i < 5)) return [3 /*break*/, 16];
-                        clickProportional(ele, point.proportionX + (i / 50), point.proportionY + (i / 50));
-                        return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 1337); })];
+                        _b.label = 3;
+                    case 3:
+                        if (!(i < 10)) return [3 /*break*/, 8];
+                        return [4 /*yield*/, getImageSource(SEMANTIC_SHAPES_IMAGE)];
+                    case 4:
+                        if (!((_b.sent()) === srcBefore)) return [3 /*break*/, 6];
+                        console.log("waiting for refresh...");
+                        return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 500); })];
+                    case 5:
+                        _b.sent();
+                        return [3 /*break*/, 7];
+                    case 6:
+                        console.log("refresh complete");
+                        return [2 /*return*/];
+                    case 7:
+                        i++;
+                        return [3 /*break*/, 3];
+                    case 8: throw new Error("clicked and waited for refresh, but refresh never happened");
+                }
+            });
+        });
+    }
+    function solveSemanticShapes() {
+        return __awaiter(this, void 0, void 0, function () {
+            var i, src, img, challenge, res, err_1, ele, _i, _a, point, countOfPointsBeforeClicking, i, _b;
+            return __generator(this, function (_c) {
+                switch (_c.label) {
+                    case 0:
+                        mouseEnterPage();
+                        i = 0;
+                        _c.label = 1;
+                    case 1:
+                        if (!(i < 25)) return [3 /*break*/, 4];
+                        randomMouseMovement();
+                        return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, 1.337); })];
+                    case 2:
+                        _c.sent();
+                        _c.label = 3;
+                    case 3:
+                        i++;
+                        return [3 /*break*/, 1];
+                    case 4: return [4 /*yield*/, getImageSource(SEMANTIC_SHAPES_IMAGE)];
+                    case 5:
+                        src = _c.sent();
+                        img = getBase64StringFromDataURL(src);
+                        return [4 /*yield*/, getTextContent(SEMANTIC_SHAPES_CHALLENGE_TEXT)];
+                    case 6:
+                        challenge = _c.sent();
+                        _c.label = 7;
+                    case 7:
+                        _c.trys.push([7, 9, , 12]);
+                        return [4 /*yield*/, semanticShapesApiCall(challenge, img)];
+                    case 8:
+                        res = _c.sent();
+                        return [3 /*break*/, 12];
+                    case 9:
+                        err_1 = _c.sent();
+                        console.log("Error calling semantic shapes API. refreshing and retrying");
+                        console.error(err_1);
+                        return [4 /*yield*/, refreshSemanticShapes()];
+                    case 10:
+                        _c.sent();
+                        return [4 /*yield*/, solveSemanticShapes()];
+                    case 11:
+                        _c.sent();
+                        return [3 /*break*/, 12];
+                    case 12: return [4 /*yield*/, waitForElement(SEMANTIC_SHAPES_IMAGE)];
                     case 13:
-                        _e.sent();
-                        _c = countOfPointsBeforeClicking;
-                        return [4 /*yield*/, countElementsInsideImageSemanticsChallenge()];
+                        ele = _c.sent();
+                        _i = 0, _a = res.proportionalPoints;
+                        _c.label = 14;
                     case 14:
-                        if (_c === (_e.sent())) {
+                        if (!(_i < _a.length)) return [3 /*break*/, 21];
+                        point = _a[_i];
+                        return [4 /*yield*/, countElementsInsideImageSemanticsChallenge()];
+                    case 15:
+                        countOfPointsBeforeClicking = _c.sent();
+                        i = 0;
+                        _c.label = 16;
+                    case 16:
+                        if (!(i < 5)) return [3 /*break*/, 20];
+                        clickProportional(ele, point.proportionX + (i / 50), point.proportionY + (i / 50));
+                        return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, 1337); })];
+                    case 17:
+                        _c.sent();
+                        _b = countOfPointsBeforeClicking;
+                        return [4 /*yield*/, countElementsInsideImageSemanticsChallenge()];
+                    case 18:
+                        if (_b === (_c.sent())) {
                             console.log("count of elements inside challenge was the same after clicking. this means no red dot appeared. trying to click again");
-                            return [3 /*break*/, 15];
+                            return [3 /*break*/, 19];
                         }
                         else {
                             console.log("a new element appeared inside after clicking. continuing to click the rest of the points");
-                            return [3 /*break*/, 16];
+                            return [3 /*break*/, 20];
                         }
-                        _e.label = 15;
-                    case 15:
-                        i++;
-                        return [3 /*break*/, 12];
-                    case 16:
-                        _i++;
-                        return [3 /*break*/, 10];
-                    case 17: return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 3000); })];
-                    case 18:
-                        _e.sent();
-                        if (!captchaIsPresent()) return [3 /*break*/, 21];
-                        console.log("captcha was still present, retrying");
-                        _d = mouseClickSimple;
-                        return [4 /*yield*/, waitForElement(SEMANTIC_SHAPES_REFRESH_BUTTON)];
+                        _c.label = 19;
                     case 19:
-                        _d.apply(void 0, [_e.sent()]);
-                        return [4 /*yield*/, solveSemanticShapes()];
+                        i++;
+                        return [3 /*break*/, 16];
                     case 20:
-                        _e.sent();
-                        _e.label = 21;
-                    case 21: return [2 /*return*/];
+                        _i++;
+                        return [3 /*break*/, 14];
+                    case 21: return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 3000); })];
+                    case 22:
+                        _c.sent();
+                        if (!captchaIsPresent()) return [3 /*break*/, 25];
+                        console.log("captcha was still present, retrying");
+                        return [4 /*yield*/, refreshSemanticShapes()];
+                    case 23:
+                        _c.sent();
+                        return [4 /*yield*/, solveSemanticShapes()];
+                    case 24:
+                        _c.sent();
+                        _c.label = 25;
+                    case 25: return [2 /*return*/];
                 }
             });
         });
@@ -1044,8 +1085,87 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
     function solveTwoImage() {
         return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                return [2 /*return*/];
+            var challengeText, _a, firstImage, _b, secondImage, _c, request, resp, targetImageSelector, targetImage, _i, _d, point, _e, _f;
+            return __generator(this, function (_g) {
+                switch (_g.label) {
+                    case 0: return [4 /*yield*/, getTextContent(TWO_IMAGE_CHALLENGE_TEXT)];
+                    case 1:
+                        challengeText = _g.sent();
+                        _g.label = 2;
+                    case 2:
+                        if (!!twoImageChallengeTextIsSupported(challengeText)) return [3 /*break*/, 6];
+                        console.log("challenge text is not supported, refreshing and retrying");
+                        _a = mouseClickSimple;
+                        return [4 /*yield*/, waitForElement(TWO_IMAGE_REFRESH_BUTTON)];
+                    case 3:
+                        _a.apply(void 0, [_g.sent()]);
+                        return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, 3000); })];
+                    case 4:
+                        _g.sent();
+                        return [4 /*yield*/, getTextContent(TWO_IMAGE_CHALLENGE_TEXT)];
+                    case 5:
+                        challengeText = _g.sent();
+                        return [3 /*break*/, 2];
+                    case 6:
+                        if (!captchaIsPresent) {
+                            console.log("captcha is not longer present. Must have been solved by a previous recursive call. returning");
+                            return [2 /*return*/];
+                        }
+                        _b = getBase64StringFromDataURL;
+                        return [4 /*yield*/, getImageSource(TWO_IMAGE_FIRST_IMAGE)];
+                    case 7:
+                        firstImage = _b.apply(void 0, [_g.sent()]);
+                        _c = getBase64StringFromDataURL;
+                        return [4 /*yield*/, getImageSource(TWO_IMAGE_SECOND_IMAGE)];
+                    case 8:
+                        secondImage = _c.apply(void 0, [_g.sent()]);
+                        request = {
+                            challenge: challengeText,
+                            images_b64: [firstImage, secondImage]
+                        };
+                        return [4 /*yield*/, twoImageApiCall(request)];
+                    case 9:
+                        resp = _g.sent();
+                        targetImageSelector = identifyTwoImageSelectorToClick(challengeText);
+                        return [4 /*yield*/, waitForElement(targetImageSelector)];
+                    case 10:
+                        targetImage = _g.sent();
+                        _i = 0, _d = resp.proportionalPoints;
+                        _g.label = 11;
+                    case 11:
+                        if (!(_i < _d.length)) return [3 /*break*/, 14];
+                        point = _d[_i];
+                        clickProportional(targetImage, point.proportionX, point.proportionY);
+                        return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, 1337); })];
+                    case 12:
+                        _g.sent();
+                        _g.label = 13;
+                    case 13:
+                        _i++;
+                        return [3 /*break*/, 11];
+                    case 14:
+                        _e = clickCenterOfElement;
+                        return [4 /*yield*/, waitForElement(TWO_IMAGE_CONFIRM_BUTTON)];
+                    case 15:
+                        _e.apply(void 0, [_g.sent()]);
+                        return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, 3000); })];
+                    case 16:
+                        _g.sent();
+                        if (!captchaIsPresent()) return [3 /*break*/, 20];
+                        console.log("captcha was still present, retrying");
+                        _f = mouseClickSimple;
+                        return [4 /*yield*/, waitForElement(TWO_IMAGE_REFRESH_BUTTON)];
+                    case 17:
+                        _f.apply(void 0, [_g.sent()]);
+                        return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, 3000); })];
+                    case 18:
+                        _g.sent();
+                        return [4 /*yield*/, solveTwoImage()];
+                    case 19:
+                        _g.sent();
+                        _g.label = 20;
+                    case 20: return [2 /*return*/];
+                }
             });
         });
     }
