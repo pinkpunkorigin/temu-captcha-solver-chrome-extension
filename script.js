@@ -69,7 +69,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     var PUZZLE_BUTTON_SELECTOR = "#slide-button";
     var PUZZLE_PUZZLE_IMAGE_SELECTOR = "#slider > img";
     var PUZZLE_PIECE_IMAGE_SELECTOR = "#img-button > img";
-    var PUZZLE_SLIDER_WRAPPER = "[class^=slider-wrapper]";
+    var PUZZLE_SLIDER_WRAPPER = ".slider-wrapper, #Slider";
     var PUZZLE_UNIQUE_IDENTIFIERS = ["#Slider"];
     var SEMANTIC_SHAPES_CHALLENGE_TEXT = ".picture-text-2Alt0, div._2Alt0zsN";
     var SEMANTIC_SHAPES_IMAGE = "#captchaImg";
@@ -79,6 +79,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     var THREE_BY_THREE_TEXT = ".verifyDialog div[role=dialog]";
     var THREE_BY_THREE_CONFIRM_BUTTON = ".verifyDialog div[role=button]:has(span)";
     var THREE_BY_THREE_UNIQUE_IDENTIFIERS = ["#imageSemantics img.loaded"];
+    var THREE_BY_THREE_CLOSE_BUTTON = "div[aria-label=close]";
     var TWO_IMAGE_FIRST_IMAGE = "div[class^=picWrap] div[class^=firstPic] #captchaImg";
     var TWO_IMAGE_SECOND_IMAGE = "div[class^=picWrap] div:not([class^=firstPic]) div:not([class^=firstPic]) #captchaImg";
     var TWO_IMAGE_CHALLENGE_TEXT = "div[class^=subTitle]";
@@ -94,7 +95,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         "#Slider",
         "#slider",
         "iframe",
-        "#imageSemantics img.loaded",
+        "#imageSemantics",
         SEMANTIC_SHAPES_IMAGE,
         ".iframe-3eaNR",
         ".iframe-8Vtge",
@@ -297,6 +298,9 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                         resp = _a.sent();
                         console.log("got api response:");
                         console.log(resp);
+                        if (resp.status >= 400) {
+                            throw new Error("API error: " + resp.text());
+                        }
                         return [2 /*return*/, resp];
                 }
             });
@@ -1032,52 +1036,14 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
     function solveThreeByThree() {
         return __awaiter(this, void 0, void 0, function () {
-            var imageElements, imageB64, challengeText, objects, request, resp, _a, _b, _c, _i, i, ele, _d;
-            return __generator(this, function (_e) {
-                switch (_e.label) {
-                    case 0: return [4 /*yield*/, waitForAllElements(THREE_BY_THREE_IMAGE)];
+            var closeButton;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, waitForElement(THREE_BY_THREE_CLOSE_BUTTON)];
                     case 1:
-                        imageElements = _e.sent();
-                        imageB64 = [];
-                        imageElements.forEach(function (ele) {
-                            imageB64.push(getBase64StringFromDataURL(ele.getAttribute("src")));
-                        });
-                        return [4 /*yield*/, getTextContent(THREE_BY_THREE_TEXT)];
-                    case 2:
-                        challengeText = _e.sent();
-                        objects = parseThreeByThreeObjectsOfInterest(challengeText);
-                        request = {
-                            objects_of_interest: objects,
-                            images: imageB64
-                        };
-                        return [4 /*yield*/, threeByThreeApiCall(request)];
-                    case 3:
-                        resp = _e.sent();
-                        _a = resp.solution_indices;
-                        _b = [];
-                        for (_c in _a)
-                            _b.push(_c);
-                        _i = 0;
-                        _e.label = 4;
-                    case 4:
-                        if (!(_i < _b.length)) return [3 /*break*/, 7];
-                        _c = _b[_i];
-                        if (!(_c in _a)) return [3 /*break*/, 6];
-                        i = _c;
-                        return [4 /*yield*/, waitForElement("img[src*=\"".concat(imageB64[i], "\"]"))];
-                    case 5:
-                        ele = _e.sent();
-                        clickProportional(ele, 0.69, 0.69);
-                        setTimeout(function () { return null; }, 1337);
-                        _e.label = 6;
-                    case 6:
-                        _i++;
-                        return [3 /*break*/, 4];
-                    case 7:
-                        _d = clickProportional;
-                        return [4 /*yield*/, waitForElement(THREE_BY_THREE_CONFIRM_BUTTON)];
-                    case 8:
-                        _d.apply(void 0, [_e.sent(), 0.69, 0.420]);
+                        closeButton = _a.sent();
+                        mouseClickSimple(closeButton);
+                        console.warn("three by three not implemented yet. closing captcha to wait for another to appear.");
                         return [2 /*return*/];
                 }
             });

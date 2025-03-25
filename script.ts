@@ -46,7 +46,7 @@ interface Request {
 	const PUZZLE_BUTTON_SELECTOR = "#slide-button"
 	const PUZZLE_PUZZLE_IMAGE_SELECTOR = "#slider > img"
 	const PUZZLE_PIECE_IMAGE_SELECTOR = "#img-button > img"
-	const PUZZLE_SLIDER_WRAPPER = "[class^=slider-wrapper]"
+	const PUZZLE_SLIDER_WRAPPER = ".slider-wrapper, #Slider"
 	const PUZZLE_UNIQUE_IDENTIFIERS = ["#Slider"]
 
 	const SEMANTIC_SHAPES_CHALLENGE_TEXT = ".picture-text-2Alt0, div._2Alt0zsN"
@@ -58,6 +58,7 @@ interface Request {
 	const THREE_BY_THREE_TEXT = ".verifyDialog div[role=dialog]"
 	const THREE_BY_THREE_CONFIRM_BUTTON = ".verifyDialog div[role=button]:has(span)"
 	const THREE_BY_THREE_UNIQUE_IDENTIFIERS = ["#imageSemantics img.loaded"]
+	const THREE_BY_THREE_CLOSE_BUTTON = "div[aria-label=close]"
 
 	const TWO_IMAGE_FIRST_IMAGE = "div[class^=picWrap] div[class^=firstPic] #captchaImg"
 	const TWO_IMAGE_SECOND_IMAGE = "div[class^=picWrap] div:not([class^=firstPic]) div:not([class^=firstPic]) #captchaImg"
@@ -76,7 +77,7 @@ interface Request {
 		"#Slider",
 		"#slider",
 		"iframe",
-		"#imageSemantics img.loaded",
+		"#imageSemantics",
 		SEMANTIC_SHAPES_IMAGE,
 		".iframe-3eaNR",
 		".iframe-8Vtge",
@@ -305,6 +306,9 @@ interface Request {
 		})
 		console.log("got api response:")
 		console.log(resp)
+		if (resp.status >= 400) {
+			throw new Error("API error: " + resp.text())
+		}
 		return resp
 	}
 
@@ -847,24 +851,28 @@ interface Request {
 	}
 
 	async function solveThreeByThree() {
-		let imageElements = await waitForAllElements(THREE_BY_THREE_IMAGE)
-		let imageB64 = []
-		imageElements.forEach(ele => {
-			imageB64.push(getBase64StringFromDataURL(ele.getAttribute("src")))
-		})
-		let challengeText = await getTextContent(THREE_BY_THREE_TEXT)
-		let objects = parseThreeByThreeObjectsOfInterest(challengeText)
-		let request: ThreeByThreeCaptchaRequest = {
-			objects_of_interest: objects,
-			images: imageB64
-		}
-		let resp = await threeByThreeApiCall(request)
-		for (let i in resp.solution_indices) {
-			let ele = await waitForElement(`img[src*="${imageB64[i]}"]`)	
-			clickProportional(ele, 0.69, 0.69)
-			setTimeout(() => null, 1337)
-		}
-		clickProportional(await waitForElement(THREE_BY_THREE_CONFIRM_BUTTON), 0.69, 0.420)
+		let closeButton = await waitForElement(THREE_BY_THREE_CLOSE_BUTTON)
+		mouseClickSimple(closeButton)
+		console.warn("three by three not implemented yet. closing captcha to wait for another to appear.")
+
+		//let imageElements = await waitForAllElements(THREE_BY_THREE_IMAGE)
+		//let imageB64 = []
+		//imageElements.forEach(ele => {
+		//	imageB64.push(getBase64StringFromDataURL(ele.getAttribute("src")))
+		//})
+		//let challengeText = await getTextContent(THREE_BY_THREE_TEXT)
+		//let objects = parseThreeByThreeObjectsOfInterest(challengeText)
+		//let request: ThreeByThreeCaptchaRequest = {
+		//	objects_of_interest: objects,
+		//	images: imageB64
+		//}
+		//let resp = await threeByThreeApiCall(request)
+		//for (let i in resp.solution_indices) {
+		//	let ele = await waitForElement(`img[src*="${imageB64[i]}"]`)	
+		//	clickProportional(ele, 0.69, 0.69)
+		//	setTimeout(() => null, 1337)
+		//}
+		//clickProportional(await waitForElement(THREE_BY_THREE_CONFIRM_BUTTON), 0.69, 0.420)
 	}
 
 	async function solveTwoImage() {
