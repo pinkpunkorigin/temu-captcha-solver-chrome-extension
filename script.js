@@ -59,6 +59,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     var PUZZLE_URL = "https://www.sadcaptcha.com/api/v1/puzzle?licenseKey=";
     var SEMANTIC_SHAPES_URL = "https://www.sadcaptcha.com/api/v1/semantic-shapes?licenseKey=";
     var TWO_IMAGE_URL = "https://www.sadcaptcha.com/api/v1/temu-two-image?licenseKey=";
+    var SWAP_TWO_URL = "https://www.sadcaptcha.com/api/v1/temu-swap-two?licenseKey=";
     var API_HEADERS = new Headers({ "Content-Type": "application/json" });
     var ELEMENTS_INSIDE_CHALLENGE_SELECTOR = "#Picture *";
     var ARCED_SLIDE_PUZZLE_IMAGE_SELECTOR = "#slider > img";
@@ -66,6 +67,9 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     var ARCED_SLIDE_PIECE_IMAGE_SELECTOR = "#img-button > img";
     var ARCED_SLIDE_BUTTON_SELECTOR = "#slide-button";
     var ARCED_SLIDE_UNIQUE_IDENTIFIERS = [".handleBar-vT4I5", ".vT4I57cQ", "div[style=\"width: 414px;\"] #slider", "div[style=\"width: 410px;\"] #slider"];
+    var SWAP_TWO_IMAGE = "img[class^=pizzle-box-img]";
+    var SWAP_TWO_REFRESH_BUTTON = "svg[class^=refreshSvg]";
+    var SWAP_TWO_UNIQUE_IDENTIFIERS = [SWAP_TWO_IMAGE];
     var PUZZLE_BUTTON_SELECTOR = "#slide-button";
     var PUZZLE_PUZZLE_IMAGE_SELECTOR = "#slider > img";
     var PUZZLE_PIECE_IMAGE_SELECTOR = "#img-button > img";
@@ -82,14 +86,10 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     var THREE_BY_THREE_CLOSE_BUTTON = "div[aria-label=close]";
     var TWO_IMAGE_FIRST_IMAGE = "div[class^=picWrap] div[class^=firstPic] #captchaImg";
     var TWO_IMAGE_SECOND_IMAGE = "div[class^=picWrap] div:not([class^=firstPic]) div:not([class^=firstPic]) #captchaImg";
-    var TWO_IMAGE_CHALLENGE_TEXT = "div[class^=subTitle]";
+    var TWO_IMAGE_CHALLENGE_TEXT = "#verification div[class^=subTitle]";
     var TWO_IMAGE_CONFIRM_BUTTON = "div[class^=btnWrap] div[role=button]";
     var TWO_IMAGE_REFRESH_BUTTON = "svg[class^=refreshIcon]";
     var TWO_IMAGE_UNIQUE_IDENTIFIERS = [TWO_IMAGE_FIRST_IMAGE, TWO_IMAGE_SECOND_IMAGE];
-    var TWO_IMAGE_SUPPORTED_CHALLENGES = [
-        "left to right",
-        "right to left"
-    ];
     var CAPTCHA_PRESENCE_INDICATORS = [
         "#slide-button",
         "#Slider",
@@ -358,6 +358,24 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
             });
         });
     }
+    function swapTwoApiCall(imageB64) {
+        return __awaiter(this, void 0, void 0, function () {
+            var resp, data;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, apiCall(SWAP_TWO_URL, {
+                            imageB64: imageB64
+                        })];
+                    case 1:
+                        resp = _a.sent();
+                        return [4 /*yield*/, resp.json()];
+                    case 2:
+                        data = _a.sent();
+                        return [2 /*return*/, data];
+                }
+            });
+        });
+    }
     function semanticShapesApiCall(challenge, imageB64) {
         return __awaiter(this, void 0, void 0, function () {
             var resp, data;
@@ -423,7 +441,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                         i = 0;
                         _a.label = 1;
                     case 1:
-                        if (!(i < 30)) return [3 /*break*/, 9];
+                        if (!(i < 30)) return [3 /*break*/, 10];
                         if (!anySelectorInListPresent(ARCED_SLIDE_UNIQUE_IDENTIFIERS)) return [3 /*break*/, 2];
                         console.log("arced slide detected");
                         return [2 /*return*/, CaptchaType.ARCED_SLIDE];
@@ -443,14 +461,18 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                         if (!anySelectorInListPresent(THREE_BY_THREE_UNIQUE_IDENTIFIERS)) return [3 /*break*/, 6];
                         console.log("3x3 detected");
                         return [2 /*return*/, CaptchaType.THREE_BY_THREE];
-                    case 6: return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 1000); })];
-                    case 7:
-                        _a.sent();
-                        _a.label = 8;
+                    case 6:
+                        if (!anySelectorInListPresent(SWAP_TWO_UNIQUE_IDENTIFIERS)) return [3 /*break*/, 7];
+                        console.log("swap two detected");
+                        return [2 /*return*/, CaptchaType.SWAP_TWO];
+                    case 7: return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 1000); })];
                     case 8:
+                        _a.sent();
+                        _a.label = 9;
+                    case 9:
                         i++;
                         return [3 /*break*/, 1];
-                    case 9: throw new Error("Could not identify CaptchaType");
+                    case 10: throw new Error("Could not identify CaptchaType");
                 }
             });
         });
@@ -626,10 +648,47 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         console.log("clicked at ".concat(x, ", ").concat(y));
         mouseClick(element, x, y);
     }
+    function dragProportional(element, points) {
+        if (points.proportionalPoints.length !== 2) {
+            throw new Error("When dragging proportional, expected points to be 2. Got ".concat(points.proportionalPoints.length));
+        }
+        var boundingBox = element.getBoundingClientRect();
+        var p1 = points.proportionalPoints[0];
+        var p2 = points.proportionalPoints[1];
+        var startX = boundingBox.x + (p1.proportionX * boundingBox.width);
+        var startY = boundingBox.y + (p1.proportionY * boundingBox.height);
+        var endX = boundingBox.x + (p2.proportionX * boundingBox.width);
+        var endY = boundingBox.y + (p2.proportionY * boundingBox.height);
+        mouseOver(startX, startY);
+        mouseDown(startX, startY);
+        new Promise(function (r) { return setTimeout(r, 300); }).then(function (value) { return null; });
+        mouseUp(endX, endY);
+    }
     function computePuzzleSlideDistance(proportionX, puzzleImageEle) {
         var distance = puzzleImageEle.getBoundingClientRect().width * proportionX;
         console.log("puzzle slide distance = " + distance);
         return distance;
+    }
+    function solveSwapTwo() {
+        return __awaiter(this, void 0, void 0, function () {
+            var src, img, solution, imgEle;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, getImageSource(SWAP_TWO_IMAGE)];
+                    case 1:
+                        src = _a.sent();
+                        img = getBase64StringFromDataURL(src);
+                        return [4 /*yield*/, swapTwoApiCall(img)];
+                    case 2:
+                        solution = _a.sent();
+                        return [4 /*yield*/, waitForElement(SWAP_TWO_IMAGE)];
+                    case 3:
+                        imgEle = _a.sent();
+                        dragProportional(imgEle, solution);
+                        return [2 /*return*/];
+                }
+            });
+        });
     }
     function solveArcedSlide() {
         return __awaiter(this, void 0, void 0, function () {
@@ -1051,86 +1110,77 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
     function solveTwoImage() {
         return __awaiter(this, void 0, void 0, function () {
-            var challengeText, _a, firstImage, _b, secondImage, _c, request, resp, targetImageSelector, targetImage, _i, _d, point, _e, _f;
+            var challengeText, firstImage, _a, secondImage, _b, request, resp, err_2, _c, targetImageSelector, targetImage, _i, _d, point, _e, _f;
             return __generator(this, function (_g) {
                 switch (_g.label) {
                     case 0: return [4 /*yield*/, getTextContent(TWO_IMAGE_CHALLENGE_TEXT)];
                     case 1:
                         challengeText = _g.sent();
-                        _g.label = 2;
-                    case 2:
-                        if (!!twoImageChallengeTextIsSupported(challengeText)) return [3 /*break*/, 6];
-                        console.log("challenge text is not supported, refreshing and retrying");
-                        _a = mouseClickSimple;
-                        return [4 /*yield*/, waitForElement(TWO_IMAGE_REFRESH_BUTTON)];
-                    case 3:
-                        _a.apply(void 0, [_g.sent()]);
-                        return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, 3000); })];
-                    case 4:
-                        _g.sent();
-                        return [4 /*yield*/, getTextContent(TWO_IMAGE_CHALLENGE_TEXT)];
-                    case 5:
-                        challengeText = _g.sent();
-                        return [3 /*break*/, 2];
-                    case 6:
-                        if (!captchaIsPresent) {
-                            console.log("captcha is not longer present. Must have been solved by a previous recursive call. returning");
-                            return [2 /*return*/];
-                        }
-                        _b = getBase64StringFromDataURL;
+                        _a = getBase64StringFromDataURL;
                         return [4 /*yield*/, getImageSource(TWO_IMAGE_FIRST_IMAGE)];
-                    case 7:
-                        firstImage = _b.apply(void 0, [_g.sent()]);
-                        _c = getBase64StringFromDataURL;
+                    case 2:
+                        firstImage = _a.apply(void 0, [_g.sent()]);
+                        _b = getBase64StringFromDataURL;
                         return [4 /*yield*/, getImageSource(TWO_IMAGE_SECOND_IMAGE)];
-                    case 8:
-                        secondImage = _c.apply(void 0, [_g.sent()]);
+                    case 3:
+                        secondImage = _b.apply(void 0, [_g.sent()]);
                         request = {
                             challenge: challengeText,
                             images_b64: [firstImage, secondImage]
                         };
+                        _g.label = 4;
+                    case 4:
+                        _g.trys.push([4, 6, , 8]);
                         return [4 /*yield*/, twoImageApiCall(request)];
-                    case 9:
+                    case 5:
                         resp = _g.sent();
+                        return [3 /*break*/, 8];
+                    case 6:
+                        err_2 = _g.sent();
+                        console.log("Error calling two image API. refreshing and retrying");
+                        console.error(err_2);
+                        _c = mouseClickSimple;
+                        return [4 /*yield*/, waitForElement(TWO_IMAGE_REFRESH_BUTTON)];
+                    case 7:
+                        _c.apply(void 0, [_g.sent()]);
+                        return [3 /*break*/, 8];
+                    case 8:
                         targetImageSelector = identifyTwoImageSelectorToClick(challengeText);
                         return [4 /*yield*/, waitForElement(targetImageSelector)];
-                    case 10:
+                    case 9:
                         targetImage = _g.sent();
                         _i = 0, _d = resp.proportionalPoints;
-                        _g.label = 11;
-                    case 11:
-                        if (!(_i < _d.length)) return [3 /*break*/, 14];
+                        _g.label = 10;
+                    case 10:
+                        if (!(_i < _d.length)) return [3 /*break*/, 13];
                         point = _d[_i];
                         clickProportional(targetImage, point.proportionX, point.proportionY);
                         return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, 1337); })];
-                    case 12:
+                    case 11:
                         _g.sent();
-                        _g.label = 13;
-                    case 13:
+                        _g.label = 12;
+                    case 12:
                         _i++;
-                        return [3 /*break*/, 11];
-                    case 14:
-                        _e = clickCenterOfElement;
+                        return [3 /*break*/, 10];
+                    case 13:
+                        _e = mouseClickSimple;
                         return [4 /*yield*/, waitForElement(TWO_IMAGE_CONFIRM_BUTTON)];
-                    case 15:
+                    case 14:
                         _e.apply(void 0, [_g.sent()]);
                         return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, 3000); })];
-                    case 16:
+                    case 15:
                         _g.sent();
-                        if (!captchaIsPresent()) return [3 /*break*/, 20];
+                        if (!captchaIsPresent()) return [3 /*break*/, 18];
                         console.log("captcha was still present, retrying");
                         _f = mouseClickSimple;
                         return [4 /*yield*/, waitForElement(TWO_IMAGE_REFRESH_BUTTON)];
-                    case 17:
+                    case 16:
                         _f.apply(void 0, [_g.sent()]);
                         return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, 3000); })];
-                    case 18:
+                    case 17:
                         _g.sent();
-                        return [4 /*yield*/, solveTwoImage()];
-                    case 19:
-                        _g.sent();
-                        _g.label = 20;
-                    case 20: return [2 /*return*/];
+                        _g.label = 18;
+                    case 18: return [2 /*return*/];
                 }
             });
         });
@@ -1166,20 +1216,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
             return TWO_IMAGE_SECOND_IMAGE;
         }
     }
-    function twoImageChallengeTextIsSupported(challengeText) {
-        for (var _i = 0, TWO_IMAGE_SUPPORTED_CHALLENGES_1 = TWO_IMAGE_SUPPORTED_CHALLENGES; _i < TWO_IMAGE_SUPPORTED_CHALLENGES_1.length; _i++) {
-            var text = TWO_IMAGE_SUPPORTED_CHALLENGES_1[_i];
-            if (challengeText.includes(text)) {
-                console.log("Two image challenge text \"".concat(challengeText, "\" is supported."));
-                return true;
-            }
-            else {
-                continue;
-            }
-        }
-        console.log("Two image challenge text \"".concat(challengeText, "\" is not supported."));
-        return false;
-    }
     /*
     * Get the list of objects to select from Temu 3x3 captcha
     * ex:
@@ -1211,11 +1247,11 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     var isCurrentSolve = false;
     function solveCaptchaLoop() {
         return __awaiter(this, void 0, void 0, function () {
-            var _, captchaType, err_2, e_1, _a, err_3;
+            var _, captchaType, err_3, e_1, _a, err_4;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
-                        if (!!isCurrentSolve) return [3 /*break*/, 27];
+                        if (!!isCurrentSolve) return [3 /*break*/, 29];
                         if (!captchaIsPresent()) return [3 /*break*/, 1];
                         console.log("captcha detected by css selector");
                         return [3 /*break*/, 3];
@@ -1237,7 +1273,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                         captchaType = _b.sent();
                         return [3 /*break*/, 8];
                     case 6:
-                        err_2 = _b.sent();
+                        err_3 = _b.sent();
                         console.log("could not detect captcha type. restarting captcha loop");
                         isCurrentSolve = false;
                         return [4 /*yield*/, solveCaptchaLoop()];
@@ -1261,7 +1297,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                         console.log("proceeding to attempt solution anyways");
                         return [3 /*break*/, 11];
                     case 11:
-                        _b.trys.push([11, 23, 24, 27]);
+                        _b.trys.push([11, 25, 26, 29]);
                         _a = captchaType;
                         switch (_a) {
                             case CaptchaType.PUZZLE: return [3 /*break*/, 12];
@@ -1269,45 +1305,50 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                             case CaptchaType.SEMANTIC_SHAPES: return [3 /*break*/, 16];
                             case CaptchaType.THREE_BY_THREE: return [3 /*break*/, 18];
                             case CaptchaType.TWO_IMAGE: return [3 /*break*/, 20];
+                            case CaptchaType.SWAP_TWO: return [3 /*break*/, 22];
                         }
-                        return [3 /*break*/, 22];
+                        return [3 /*break*/, 24];
                     case 12: return [4 /*yield*/, solvePuzzle()];
                     case 13:
                         _b.sent();
-                        return [3 /*break*/, 22];
+                        return [3 /*break*/, 24];
                     case 14: return [4 /*yield*/, solveArcedSlide()];
                     case 15:
                         _b.sent();
-                        return [3 /*break*/, 22];
+                        return [3 /*break*/, 24];
                     case 16: return [4 /*yield*/, solveSemanticShapes()];
                     case 17:
                         _b.sent();
-                        return [3 /*break*/, 22];
+                        return [3 /*break*/, 24];
                     case 18: return [4 /*yield*/, solveThreeByThree()];
                     case 19:
                         _b.sent();
-                        return [3 /*break*/, 22];
+                        return [3 /*break*/, 24];
                     case 20: return [4 /*yield*/, solveTwoImage()];
                     case 21:
                         _b.sent();
-                        return [3 /*break*/, 22];
-                    case 22: return [3 /*break*/, 27];
+                        return [3 /*break*/, 24];
+                    case 22: return [4 /*yield*/, solveSwapTwo()];
                     case 23:
-                        err_3 = _b.sent();
+                        _b.sent();
+                        return [3 /*break*/, 24];
+                    case 24: return [3 /*break*/, 29];
+                    case 25:
+                        err_4 = _b.sent();
                         console.log("error solving captcha");
-                        console.error(err_3);
+                        console.error(err_4);
                         console.log("restarting captcha loop");
-                        return [3 /*break*/, 27];
-                    case 24:
+                        return [3 /*break*/, 29];
+                    case 26:
                         isCurrentSolve = false;
                         return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 5000); })];
-                    case 25:
+                    case 27:
                         _b.sent();
                         return [4 /*yield*/, solveCaptchaLoop()];
-                    case 26:
+                    case 28:
                         _b.sent();
                         return [7 /*endfinally*/];
-                    case 27: return [2 /*return*/];
+                    case 29: return [2 /*return*/];
                 }
             });
         });

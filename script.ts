@@ -32,6 +32,7 @@ interface Request {
 	const PUZZLE_URL = "https://www.sadcaptcha.com/api/v1/puzzle?licenseKey="
 	const SEMANTIC_SHAPES_URL = "https://www.sadcaptcha.com/api/v1/semantic-shapes?licenseKey="
 	const TWO_IMAGE_URL = "https://www.sadcaptcha.com/api/v1/temu-two-image?licenseKey="
+	const SWAP_TWO_URL = "https://www.sadcaptcha.com/api/v1/temu-swap-two?licenseKey="
 
 	const API_HEADERS = new Headers({ "Content-Type": "application/json" })
 
@@ -42,6 +43,10 @@ interface Request {
 	const ARCED_SLIDE_PIECE_IMAGE_SELECTOR = "#img-button > img"
 	const ARCED_SLIDE_BUTTON_SELECTOR = "#slide-button"
 	const ARCED_SLIDE_UNIQUE_IDENTIFIERS = [".handleBar-vT4I5", ".vT4I57cQ", "div[style=\"width: 414px;\"] #slider", "div[style=\"width: 410px;\"] #slider"]
+
+	const SWAP_TWO_IMAGE = "img[class^=pizzle-box-img]"
+	const SWAP_TWO_REFRESH_BUTTON = "svg[class^=refreshSvg]"
+	const SWAP_TWO_UNIQUE_IDENTIFIERS = [SWAP_TWO_IMAGE]
 
 	const PUZZLE_BUTTON_SELECTOR = "#slide-button"
 	const PUZZLE_PUZZLE_IMAGE_SELECTOR = "#slider > img"
@@ -62,15 +67,10 @@ interface Request {
 
 	const TWO_IMAGE_FIRST_IMAGE = "div[class^=picWrap] div[class^=firstPic] #captchaImg"
 	const TWO_IMAGE_SECOND_IMAGE = "div[class^=picWrap] div:not([class^=firstPic]) div:not([class^=firstPic]) #captchaImg"
-	const TWO_IMAGE_CHALLENGE_TEXT = "div[class^=subTitle]"
+	const TWO_IMAGE_CHALLENGE_TEXT = "#verification div[class^=subTitle]"
 	const TWO_IMAGE_CONFIRM_BUTTON = "div[class^=btnWrap] div[role=button]"
 	const TWO_IMAGE_REFRESH_BUTTON = "svg[class^=refreshIcon]"
 	const TWO_IMAGE_UNIQUE_IDENTIFIERS = [TWO_IMAGE_FIRST_IMAGE, TWO_IMAGE_SECOND_IMAGE]
-
-	const TWO_IMAGE_SUPPORTED_CHALLENGES = [
-		"left to right",
-		"right to left"
-	]
 
 	const CAPTCHA_PRESENCE_INDICATORS = [
 		"#slide-button",
@@ -101,6 +101,10 @@ interface Request {
 	type TwoImageRequest = {
 		challenge: string
 		images_b64: Array<string>
+	}
+
+	type SwapTwoRequest = {
+		image_b64: string
 	}
 
 	/*
@@ -336,6 +340,14 @@ interface Request {
 		return slideXProportion
 	}
 
+	async function swapTwoApiCall(imageB64: string): Promise<MultiPointResponse> {
+		let resp = await apiCall(SWAP_TWO_URL, {
+			imageB64: imageB64
+		})
+		let data = await resp.json()
+		return data
+	}
+
 	async function semanticShapesApiCall(challenge: string, imageB64: string): Promise<MultiPointResponse> {
 		let resp = await apiCall(SEMANTIC_SHAPES_URL, {
 			challenge: challenge,
@@ -389,6 +401,9 @@ interface Request {
 			} else if (anySelectorInListPresent(THREE_BY_THREE_UNIQUE_IDENTIFIERS)) {
 				console.log("3x3 detected")
 				return CaptchaType.THREE_BY_THREE
+			} else if (anySelectorInListPresent(SWAP_TWO_UNIQUE_IDENTIFIERS)) {
+				console.log("swap two detected")
+				return CaptchaType.SWAP_TWO
 			} else {
 				await new Promise(r => setTimeout(r, 1000));
 			}
@@ -420,7 +435,7 @@ interface Request {
 		console.log("mouse up at " + x + ", " + y)
 	}
 
-	function mouseOver(x, y): void {
+	function mouseOver(x: number, y: number): void {
 		let underMouse = document.elementFromPoint(x, y)
 		underMouse.dispatchEvent(
 			new MouseEvent("mouseover", {
@@ -590,10 +605,36 @@ interface Request {
 		mouseClick(element, x, y)
 	}
 
+	function dragProportional(element: Element, points: MultiPointResponse): void {
+		if (points.proportionalPoints.length !== 2) {
+			throw new Error(
+				`When dragging proportional, expected points to be 2. Got ${points.proportionalPoints.length}` )
+		}
+		let boundingBox = element.getBoundingClientRect()
+		let p1 = points.proportionalPoints[0];
+		let p2 = points.proportionalPoints[1];
+		let startX = boundingBox.x + (p1.proportionX * boundingBox.width)
+		let startY = boundingBox.y + (p1.proportionY * boundingBox.height)
+		let endX = boundingBox.x + (p2.proportionX * boundingBox.width)
+		let endY = boundingBox.y + (p2.proportionY * boundingBox.height)
+		mouseOver(startX, startY)
+		mouseDown(startX, startY)
+		new Promise(r => setTimeout(r, 300)).then(value => null);
+		mouseUp(endX, endY)
+	}
+
 	function computePuzzleSlideDistance(proportionX: number, puzzleImageEle: Element): number {
 		let distance = puzzleImageEle.getBoundingClientRect().width * proportionX
 		console.log("puzzle slide distance = " + distance)
 		return distance
+	}
+
+	async function solveSwapTwo(): Promise<void> {
+		let src = await getImageSource(SWAP_TWO_IMAGE)
+		let img = getBase64StringFromDataURL(src)
+		let solution = await swapTwoApiCall(img)
+		let imgEle = await waitForElement(SWAP_TWO_IMAGE)
+		dragProportional(imgEle, solution);
 	}
 
 	async function solveArcedSlide(): Promise<void> {
@@ -876,20 +917,7 @@ interface Request {
 	}
 
 	async function solveTwoImage() {
-		//mouseEnterPage()
 		let challengeText = await getTextContent(TWO_IMAGE_CHALLENGE_TEXT)
-		while (!twoImageChallengeTextIsSupported(challengeText)) {
-			console.log("challenge text is not supported, refreshing and retrying")
-			mouseClickSimple(await waitForElement(TWO_IMAGE_REFRESH_BUTTON))
-			await new Promise(resolve => setTimeout(resolve, 3000));
-			challengeText = await getTextContent(TWO_IMAGE_CHALLENGE_TEXT)
-		}
-
-		if (!captchaIsPresent) {
-			console.log("captcha is not longer present. Must have been solved by a previous recursive call. returning")
-			return
-		}
-
 		let firstImage = getBase64StringFromDataURL(await getImageSource(TWO_IMAGE_FIRST_IMAGE))
 		let secondImage = getBase64StringFromDataURL(await getImageSource(TWO_IMAGE_SECOND_IMAGE))
 
@@ -898,7 +926,15 @@ interface Request {
 			images_b64: [firstImage, secondImage]
 		}
 
-		let resp = await twoImageApiCall(request)
+		let resp: MultiPointResponse
+		try {
+			resp = await twoImageApiCall(request)
+		} catch (err) {
+			console.log("Error calling two image API. refreshing and retrying")
+			console.error(err)
+			mouseClickSimple(await waitForElement(TWO_IMAGE_REFRESH_BUTTON))
+			//await solveTwoImage()
+		}
 		let targetImageSelector = identifyTwoImageSelectorToClick(challengeText)
 		let targetImage = await waitForElement(targetImageSelector)
 
@@ -907,14 +943,14 @@ interface Request {
 			await new Promise(resolve => setTimeout(resolve, 1337));
 		}
 
-		clickCenterOfElement(await waitForElement(TWO_IMAGE_CONFIRM_BUTTON))
+		mouseClickSimple(await waitForElement(TWO_IMAGE_CONFIRM_BUTTON))
 		await new Promise(resolve => setTimeout(resolve, 3000));
 
 		if (captchaIsPresent()) {
 			console.log("captcha was still present, retrying")
 			mouseClickSimple(await waitForElement(TWO_IMAGE_REFRESH_BUTTON))
 			await new Promise(resolve => setTimeout(resolve, 3000));
-			await solveTwoImage()
+			//await solveTwoImage()
 		}
 
 	}
@@ -940,19 +976,6 @@ interface Request {
 			console.log("challenge is asking us to click the second image")
 			return TWO_IMAGE_SECOND_IMAGE
 		}
-	}
-
-	function twoImageChallengeTextIsSupported(challengeText: string): Boolean {
-		for (let text of TWO_IMAGE_SUPPORTED_CHALLENGES) {
-			if (challengeText.includes(text)) {
-				console.log(`Two image challenge text "${challengeText}" is supported.`)
-				return true
-			} else {
-				continue
-			}
-		}
-		console.log(`Two image challenge text "${challengeText}" is not supported.`)
-		return false
 	}
 
 	/*
@@ -1035,6 +1058,9 @@ interface Request {
 						break
 					case CaptchaType.TWO_IMAGE:
 						await solveTwoImage()
+						break
+					case CaptchaType.SWAP_TWO:
+						await solveSwapTwo()
 						break
 				}
 			} catch (err) {
