@@ -26,23 +26,23 @@ interface Request {
 		}
 	)
 
-	const CREDITS_URL = "https://www.sadcaptcha.com/api/v1/license/credits?licenseKey="
-	const ARCED_SLIDE_URL = "https://www.sadcaptcha.com/api/v1/temu-arced-slide?licenseKey="
-	const THREE_BY_THREE_URL = "https://www.sadcaptcha.com/api/v1/temu-three-by-three?licenseKey="
-	const PUZZLE_URL = "https://www.sadcaptcha.com/api/v1/puzzle?licenseKey="
-	const SEMANTIC_SHAPES_URL = "https://www.sadcaptcha.com/api/v1/semantic-shapes?licenseKey="
-	const TWO_IMAGE_URL = "https://www.sadcaptcha.com/api/v1/temu-two-image?licenseKey="
-	const SWAP_TWO_URL = "https://www.sadcaptcha.com/api/v1/temu-swap-two?licenseKey="
+	const CREDITS_URL = "https://sadpuzzles.com/api/v1/license/credits?licenseKey="
+	const ARCED_SLIDE_URL = "https://sadpuzzles.com/api/v1/temu-arced-slide?licenseKey="
+	const THREE_BY_THREE_URL = "https://sadpuzzles.com/api/v1/temu-three-by-three?licenseKey="
+	const PUZZLE_URL = "https://sadpuzzles.com/api/v1/puzzle?licenseKey="
+	const SEMANTIC_SHAPES_URL = "https://sadpuzzles.com/api/v1/semantic-shapes?licenseKey="
+	const TWO_IMAGE_URL = "https://sadpuzzles.com/api/v1/temu-two-image?licenseKey="
+	const SWAP_TWO_URL = "https://sadpuzzles.com/api/v1/temu-swap-two?licenseKey="
 
 	const API_HEADERS = new Headers({ "Content-Type": "application/json" })
 
 	const ELEMENTS_INSIDE_CHALLENGE_SELECTOR = "#Picture *"
 
-	const ARCED_SLIDE_PUZZLE_IMAGE_SELECTOR = "#slider > img"
-	const ARCED_SLIDE_PIECE_CONTAINER_SELECTOR = "#img-button"
-	const ARCED_SLIDE_PIECE_IMAGE_SELECTOR = "#img-button > img"
-	const ARCED_SLIDE_BUTTON_SELECTOR = "#slide-button"
-	const ARCED_SLIDE_UNIQUE_IDENTIFIERS = [".handleBar-vT4I5", ".vT4I57cQ", "div[style=\"width: 414px;\"] #slider", "div[style=\"width: 410px;\"] #slider"]
+	const ARCED_SLIDE_PUZZLE_IMAGE_SELECTOR = "#slider > img, img[class^=bgImg]"
+	const ARCED_SLIDE_PIECE_CONTAINER_SELECTOR = "#img-button, div[role=dialog] div[style^='position: relative'] div[style^='position: absolute;']"
+	const ARCED_SLIDE_PIECE_IMAGE_SELECTOR = "div[role=dialog] div[style^='position: relative'] div[style^='position: absolute;'] > img"
+	const ARCED_SLIDE_BUTTON_SELECTOR = "#slide-button, div[class^=handleBar] div[style^='position: absolute']"
+	const ARCED_SLIDE_UNIQUE_IDENTIFIERS = [ARCED_SLIDE_PIECE_CONTAINER_SELECTOR, ".handleBar-vT4I5", ".vT4I57cQ", "div[style=\"width: 414px;\"] #slider", "div[style=\"width: 410px;\"] #slider"]
 
 	const SWAP_TWO_IMAGE = "img[class^=pizzle-box-img]"
 	const SWAP_TWO_REFRESH_BUTTON = "svg[class^=refreshSvg]"
@@ -73,6 +73,8 @@ interface Request {
 	const TWO_IMAGE_UNIQUE_IDENTIFIERS = [TWO_IMAGE_FIRST_IMAGE, TWO_IMAGE_SECOND_IMAGE]
 
 	const CAPTCHA_PRESENCE_INDICATORS = [
+		ARCED_SLIDE_PIECE_CONTAINER_SELECTOR,
+		ARCED_SLIDE_BUTTON_SELECTOR,
 		"#slide-button",
 		"#Slider",
 		"#slider",
@@ -653,21 +655,25 @@ interface Request {
 			slide_piece_trajectory: trajectory
 		})
 		let currentX = getElementCenter(slideButtonEle).x
+		let currentY = getElementCenter(slideButtonEle).y
 		let solutionDistanceBackwards = currentX - startX - solution
+		console.log(solutionDistanceBackwards)
 		let overshoot = 6
 		let mouseStep = 2
 		await new Promise(r => setTimeout(r, 100));
 		for (
-				let i = 0;
-				i < solutionDistanceBackwards;
-				i += 1
+				let pixel = 0;
+				pixel < solutionDistanceBackwards;
+				pixel += 1
 		) {
 			mouseMove(
-				currentX - i,
-				startY + Math.random() * 5
+				currentX - pixel,
+				currentY - Math.log(pixel + 1),
+				slideButtonEle
 			)
 			console.debug("current x: " + currentX)
-			await new Promise(r => setTimeout(r, 10 + Math.random() * 5));
+			let pauseTime = (200 / (pixel + 1)) + (Math.random() * 5)
+			await new Promise(r => setTimeout(r, pauseTime));
 		}
 		await new Promise(r => setTimeout(r, 300));
 		mouseMove(startX + solution, startY)
@@ -697,7 +703,8 @@ interface Request {
 			})
 		)
 		for (let pixel = 0; pixel < slideBarWidth; pixel += mouseStep) {
-			await new Promise(r => setTimeout(r, 10 + Math.random() * 5));
+			let pauseTime = (200 / (pixel + 1)) + (Math.random() * 5)
+			await new Promise(r => setTimeout(r, pauseTime));
 			//moveMouseTo(slideButtonCenter.x + pixel, slideButtonCenter.y - pixel)
 			slideButton.dispatchEvent(
 				new MouseEvent("mousemove", {

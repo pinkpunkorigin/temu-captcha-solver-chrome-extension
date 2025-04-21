@@ -53,20 +53,20 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
             sendResponse({ message: "API key cannot be empty.", success: 0 });
         }
     });
-    var CREDITS_URL = "https://www.sadcaptcha.com/api/v1/license/credits?licenseKey=";
-    var ARCED_SLIDE_URL = "https://www.sadcaptcha.com/api/v1/temu-arced-slide?licenseKey=";
-    var THREE_BY_THREE_URL = "https://www.sadcaptcha.com/api/v1/temu-three-by-three?licenseKey=";
-    var PUZZLE_URL = "https://www.sadcaptcha.com/api/v1/puzzle?licenseKey=";
-    var SEMANTIC_SHAPES_URL = "https://www.sadcaptcha.com/api/v1/semantic-shapes?licenseKey=";
-    var TWO_IMAGE_URL = "https://www.sadcaptcha.com/api/v1/temu-two-image?licenseKey=";
-    var SWAP_TWO_URL = "https://www.sadcaptcha.com/api/v1/temu-swap-two?licenseKey=";
+    var CREDITS_URL = "https://sadpuzzles.com/api/v1/license/credits?licenseKey=";
+    var ARCED_SLIDE_URL = "https://sadpuzzles.com/api/v1/temu-arced-slide?licenseKey=";
+    var THREE_BY_THREE_URL = "https://sadpuzzles.com/api/v1/temu-three-by-three?licenseKey=";
+    var PUZZLE_URL = "https://sadpuzzles.com/api/v1/puzzle?licenseKey=";
+    var SEMANTIC_SHAPES_URL = "https://sadpuzzles.com/api/v1/semantic-shapes?licenseKey=";
+    var TWO_IMAGE_URL = "https://sadpuzzles.com/api/v1/temu-two-image?licenseKey=";
+    var SWAP_TWO_URL = "https://sadpuzzles.com/api/v1/temu-swap-two?licenseKey=";
     var API_HEADERS = new Headers({ "Content-Type": "application/json" });
     var ELEMENTS_INSIDE_CHALLENGE_SELECTOR = "#Picture *";
-    var ARCED_SLIDE_PUZZLE_IMAGE_SELECTOR = "#slider > img";
-    var ARCED_SLIDE_PIECE_CONTAINER_SELECTOR = "#img-button";
-    var ARCED_SLIDE_PIECE_IMAGE_SELECTOR = "#img-button > img";
-    var ARCED_SLIDE_BUTTON_SELECTOR = "#slide-button";
-    var ARCED_SLIDE_UNIQUE_IDENTIFIERS = [".handleBar-vT4I5", ".vT4I57cQ", "div[style=\"width: 414px;\"] #slider", "div[style=\"width: 410px;\"] #slider"];
+    var ARCED_SLIDE_PUZZLE_IMAGE_SELECTOR = "#slider > img, img[class^=bgImg]";
+    var ARCED_SLIDE_PIECE_CONTAINER_SELECTOR = "#img-button, div[role=dialog] div[style^='position: relative'] div[style^='position: absolute;']";
+    var ARCED_SLIDE_PIECE_IMAGE_SELECTOR = "div[role=dialog] div[style^='position: relative'] div[style^='position: absolute;'] > img";
+    var ARCED_SLIDE_BUTTON_SELECTOR = "#slide-button, div[class^=handleBar] div[style^='position: absolute']";
+    var ARCED_SLIDE_UNIQUE_IDENTIFIERS = [ARCED_SLIDE_PIECE_CONTAINER_SELECTOR, ".handleBar-vT4I5", ".vT4I57cQ", "div[style=\"width: 414px;\"] #slider", "div[style=\"width: 410px;\"] #slider"];
     var SWAP_TWO_IMAGE = "img[class^=pizzle-box-img]";
     var SWAP_TWO_REFRESH_BUTTON = "svg[class^=refreshSvg]";
     var SWAP_TWO_UNIQUE_IDENTIFIERS = [SWAP_TWO_IMAGE];
@@ -91,6 +91,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     var TWO_IMAGE_REFRESH_BUTTON = "svg[class^=refreshIcon]";
     var TWO_IMAGE_UNIQUE_IDENTIFIERS = [TWO_IMAGE_FIRST_IMAGE, TWO_IMAGE_SECOND_IMAGE];
     var CAPTCHA_PRESENCE_INDICATORS = [
+        ARCED_SLIDE_PIECE_CONTAINER_SELECTOR,
+        ARCED_SLIDE_BUTTON_SELECTOR,
         "#slide-button",
         "#Slider",
         "#slider",
@@ -692,7 +694,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
     function solveArcedSlide() {
         return __awaiter(this, void 0, void 0, function () {
-            var puzzleImageSrc, pieceImageSrc, puzzleImg, pieceImg, slideButtonEle, startX, startY, puzzleEle, trajectory, solution, currentX, solutionDistanceBackwards, overshoot, mouseStep, i;
+            var puzzleImageSrc, pieceImageSrc, puzzleImg, pieceImg, slideButtonEle, startX, startY, puzzleEle, trajectory, solution, currentX, currentY, solutionDistanceBackwards, overshoot, mouseStep, _loop_3, pixel;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0: return [4 /*yield*/, getImageSource(ARCED_SLIDE_PUZZLE_IMAGE_SELECTOR)];
@@ -722,24 +724,39 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                     case 6:
                         solution = _a.sent();
                         currentX = getElementCenter(slideButtonEle).x;
+                        currentY = getElementCenter(slideButtonEle).y;
                         solutionDistanceBackwards = currentX - startX - solution;
+                        console.log(solutionDistanceBackwards);
                         overshoot = 6;
                         mouseStep = 2;
                         return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 100); })];
                     case 7:
                         _a.sent();
-                        i = 0;
+                        _loop_3 = function (pixel) {
+                            var pauseTime;
+                            return __generator(this, function (_b) {
+                                switch (_b.label) {
+                                    case 0:
+                                        mouseMove(currentX - pixel, currentY - Math.log(pixel + 1), slideButtonEle);
+                                        console.debug("current x: " + currentX);
+                                        pauseTime = (200 / (pixel + 1)) + (Math.random() * 5);
+                                        return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, pauseTime); })];
+                                    case 1:
+                                        _b.sent();
+                                        return [2 /*return*/];
+                                }
+                            });
+                        };
+                        pixel = 0;
                         _a.label = 8;
                     case 8:
-                        if (!(i < solutionDistanceBackwards)) return [3 /*break*/, 11];
-                        mouseMove(currentX - i, startY + Math.random() * 5);
-                        console.debug("current x: " + currentX);
-                        return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 10 + Math.random() * 5); })];
+                        if (!(pixel < solutionDistanceBackwards)) return [3 /*break*/, 11];
+                        return [5 /*yield**/, _loop_3(pixel)];
                     case 9:
                         _a.sent();
                         _a.label = 10;
                     case 10:
-                        i += 1;
+                        pixel += 1;
                         return [3 /*break*/, 8];
                     case 11: return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 300); })];
                     case 12:
@@ -756,7 +773,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
     function getSlidePieceTrajectory(slideButton, puzzle) {
         return __awaiter(this, void 0, void 0, function () {
-            var sliderPieceContainer, slideBarWidth, timesPieceDidNotMove, slideButtonCenter, puzzleImageBoundingBox, trajectory, mouseStep, pixel, trajectoryElement;
+            var sliderPieceContainer, slideBarWidth, timesPieceDidNotMove, slideButtonCenter, puzzleImageBoundingBox, trajectory, mouseStep, _loop_4, pixel, state_3;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0: return [4 /*yield*/, waitForElement(ARCED_SLIDE_PIECE_CONTAINER_SELECTOR)];
@@ -779,40 +796,55 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                             clientX: slideButtonCenter.x,
                             clientY: slideButtonCenter.y
                         }));
+                        _loop_4 = function (pixel) {
+                            var pauseTime, trajectoryElement;
+                            return __generator(this, function (_b) {
+                                switch (_b.label) {
+                                    case 0:
+                                        pauseTime = (200 / (pixel + 1)) + (Math.random() * 5);
+                                        return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, pauseTime); })];
+                                    case 1:
+                                        _b.sent();
+                                        //moveMouseTo(slideButtonCenter.x + pixel, slideButtonCenter.y - pixel)
+                                        slideButton.dispatchEvent(new MouseEvent("mousemove", {
+                                            cancelable: true,
+                                            bubbles: true,
+                                            clientX: slideButtonCenter.x + pixel,
+                                            clientY: slideButtonCenter.y - Math.log(pixel + 1)
+                                        }));
+                                        return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 40); })];
+                                    case 2:
+                                        _b.sent();
+                                        trajectoryElement = getTrajectoryElement(pixel, puzzleImageBoundingBox, sliderPieceContainer);
+                                        trajectory.push(trajectoryElement);
+                                        if (trajectory.length < 100 / mouseStep)
+                                            return [2 /*return*/, "continue"];
+                                        if (pieceIsNotMoving(trajectory))
+                                            timesPieceDidNotMove++;
+                                        else
+                                            timesPieceDidNotMove = 0;
+                                        if (timesPieceDidNotMove >= 10 / mouseStep)
+                                            return [2 /*return*/, "break"];
+                                        console.log("trajectory element:");
+                                        console.dir(trajectoryElement);
+                                        return [2 /*return*/];
+                                }
+                            });
+                        };
                         pixel = 0;
                         _a.label = 2;
                     case 2:
-                        if (!(pixel < slideBarWidth)) return [3 /*break*/, 6];
-                        return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 10 + Math.random() * 5); })];
+                        if (!(pixel < slideBarWidth)) return [3 /*break*/, 5];
+                        return [5 /*yield**/, _loop_4(pixel)];
                     case 3:
-                        _a.sent();
-                        //moveMouseTo(slideButtonCenter.x + pixel, slideButtonCenter.y - pixel)
-                        slideButton.dispatchEvent(new MouseEvent("mousemove", {
-                            cancelable: true,
-                            bubbles: true,
-                            clientX: slideButtonCenter.x + pixel,
-                            clientY: slideButtonCenter.y - Math.log(pixel + 1)
-                        }));
-                        return [4 /*yield*/, new Promise(function (r) { return setTimeout(r, 40); })];
-                    case 4:
-                        _a.sent();
-                        trajectoryElement = getTrajectoryElement(pixel, puzzleImageBoundingBox, sliderPieceContainer);
-                        trajectory.push(trajectoryElement);
-                        if (trajectory.length < 100 / mouseStep)
+                        state_3 = _a.sent();
+                        if (state_3 === "break")
                             return [3 /*break*/, 5];
-                        if (pieceIsNotMoving(trajectory))
-                            timesPieceDidNotMove++;
-                        else
-                            timesPieceDidNotMove = 0;
-                        if (timesPieceDidNotMove >= 10 / mouseStep)
-                            return [3 /*break*/, 6];
-                        console.log("trajectory element:");
-                        console.dir(trajectoryElement);
-                        _a.label = 5;
-                    case 5:
+                        _a.label = 4;
+                    case 4:
                         pixel += mouseStep;
                         return [3 /*break*/, 2];
-                    case 6: return [2 /*return*/, trajectory];
+                    case 5: return [2 /*return*/, trajectory];
                 }
             });
         });

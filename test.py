@@ -31,7 +31,7 @@ def run(playwright: Playwright):
     )
 
     page = context.new_page()
-    # stealth_sync(page, config=stealth_config)
+    stealth_sync(page, config=stealth_config)
 
     page.goto("https://www.temu.com")
     input("trigger the captcha")
