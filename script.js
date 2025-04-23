@@ -70,9 +70,9 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     var SWAP_TWO_IMAGE = "img[class^=pizzle-box-img]";
     var SWAP_TWO_REFRESH_BUTTON = "svg[class^=refreshSvg]";
     var SWAP_TWO_UNIQUE_IDENTIFIERS = [SWAP_TWO_IMAGE];
-    var PUZZLE_BUTTON_SELECTOR = "#slide-button";
-    var PUZZLE_PUZZLE_IMAGE_SELECTOR = "#slider > img";
-    var PUZZLE_PIECE_IMAGE_SELECTOR = "#img-button > img";
+    var PUZZLE_BUTTON_SELECTOR = "#slide-button, div[class^=slide-btn]";
+    var PUZZLE_PUZZLE_IMAGE_SELECTOR = "#slider > img, img[class^='slider-img-bg']";
+    var PUZZLE_PIECE_IMAGE_SELECTOR = "#img-button > img, img[class^='block-img']";
     var PUZZLE_SLIDER_WRAPPER = ".slider-wrapper, #Slider";
     var PUZZLE_UNIQUE_IDENTIFIERS = ["#Slider"];
     var SEMANTIC_SHAPES_CHALLENGE_TEXT = ".picture-text-2Alt0, div._2Alt0zsN";

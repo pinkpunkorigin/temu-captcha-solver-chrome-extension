@@ -48,9 +48,9 @@ interface Request {
 	const SWAP_TWO_REFRESH_BUTTON = "svg[class^=refreshSvg]"
 	const SWAP_TWO_UNIQUE_IDENTIFIERS = [SWAP_TWO_IMAGE]
 
-	const PUZZLE_BUTTON_SELECTOR = "#slide-button"
-	const PUZZLE_PUZZLE_IMAGE_SELECTOR = "#slider > img"
-	const PUZZLE_PIECE_IMAGE_SELECTOR = "#img-button > img"
+	const PUZZLE_BUTTON_SELECTOR = "#slide-button, div[class^=slide-btn]"
+	const PUZZLE_PUZZLE_IMAGE_SELECTOR = "#slider > img, img[class^='slider-img-bg']"
+	const PUZZLE_PIECE_IMAGE_SELECTOR = "#img-button > img, img[class^='block-img']"
 	const PUZZLE_SLIDER_WRAPPER = ".slider-wrapper, #Slider"
 	const PUZZLE_UNIQUE_IDENTIFIERS = ["#Slider"]
 
