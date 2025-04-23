@@ -12,10 +12,10 @@ if os.path.isdir(user_data_dir):
 
 proxy = {
     # "server": "45.67.2.8:5582",
-    # "server": "185.216.106.238:6315",
+    "server": "185.216.106.238:6315",
 }
 
-proxy = None
+# proxy = None
 
 stealth_config = StealthConfig(navigator_languages=False, navigator_vendor=False, navigator_user_agent=False)
 

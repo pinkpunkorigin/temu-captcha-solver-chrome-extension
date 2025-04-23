@@ -101,7 +101,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         SEMANTIC_SHAPES_IMAGE,
         ".iframe-3eaNR",
         ".iframe-8Vtge",
-        "#captchaImg"
+        "#captchaImg",
     ];
     var CaptchaType;
     (function (CaptchaType) {
@@ -517,6 +517,36 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         }));
         console.log("mouse over at " + x + ", " + y);
     }
+    function mouseDragStart(x, y) {
+        var underMouse = document.elementFromPoint(x, y);
+        underMouse.dispatchEvent(new MouseEvent("dragstart", {
+            cancelable: true,
+            bubbles: true,
+            clientX: x,
+            clientY: y
+        }));
+        console.log("mouse drag start at " + x + ", " + y);
+    }
+    function mouseDrag(x, y) {
+        var underMouse = document.elementFromPoint(x, y);
+        underMouse.dispatchEvent(new MouseEvent("drag", {
+            cancelable: true,
+            bubbles: true,
+            clientX: x,
+            clientY: y
+        }));
+        console.log("mouse drag at " + x + ", " + y);
+    }
+    function mouseDragEnd(x, y) {
+        var underMouse = document.elementFromPoint(x, y);
+        underMouse.dispatchEvent(new MouseEvent("dragend", {
+            cancelable: true,
+            bubbles: true,
+            clientX: x,
+            clientY: y
+        }));
+        console.log("mouse drag end at " + x + ", " + y);
+    }
     function mouseDown(x, y) {
         var underMouse = document.elementFromPoint(x, y);
         underMouse.dispatchEvent(new MouseEvent("mousedown", {
@@ -663,8 +693,12 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         var endY = boundingBox.y + (p2.proportionY * boundingBox.height);
         mouseOver(startX, startY);
         mouseDown(startX, startY);
+        mouseDragStart(startX + 1, startY + 1);
         new Promise(function (r) { return setTimeout(r, 300); }).then(function (value) { return null; });
+        mouseDrag(endX - 1, endY - 1);
+        mouseOver(endX, endY);
         mouseUp(endX, endY);
+        mouseDragEnd(endX, endY);
     }
     function computePuzzleSlideDistance(proportionX, puzzleImageEle) {
         var distance = puzzleImageEle.getBoundingClientRect().width * proportionX;
@@ -673,21 +707,37 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
     function solveSwapTwo() {
         return __awaiter(this, void 0, void 0, function () {
-            var src, img, solution, imgEle;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
+            var src, img, solution, imgEle, _a;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
                     case 0: return [4 /*yield*/, getImageSource(SWAP_TWO_IMAGE)];
                     case 1:
-                        src = _a.sent();
+                        src = _b.sent();
                         img = getBase64StringFromDataURL(src);
                         return [4 /*yield*/, swapTwoApiCall(img)];
                     case 2:
-                        solution = _a.sent();
+                        solution = _b.sent();
                         return [4 /*yield*/, waitForElement(SWAP_TWO_IMAGE)];
                     case 3:
-                        imgEle = _a.sent();
+                        imgEle = _b.sent();
                         dragProportional(imgEle, solution);
-                        return [2 /*return*/];
+                        return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, 3000); })];
+                    case 4:
+                        _b.sent();
+                        if (!captchaIsPresent()) return [3 /*break*/, 8];
+                        console.log("captcha was still present, retrying");
+                        _a = mouseClickSimple;
+                        return [4 /*yield*/, waitForElement(SWAP_TWO_REFRESH_BUTTON)];
+                    case 5:
+                        _a.apply(void 0, [_b.sent()]);
+                        return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, 3000); })];
+                    case 6:
+                        _b.sent();
+                        return [4 /*yield*/, solveSwapTwo()];
+                    case 7:
+                        _b.sent();
+                        _b.label = 8;
+                    case 8: return [2 /*return*/];
                 }
             });
         });

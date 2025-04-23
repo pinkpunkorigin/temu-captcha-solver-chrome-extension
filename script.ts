@@ -83,7 +83,7 @@ interface Request {
 		SEMANTIC_SHAPES_IMAGE,
 		".iframe-3eaNR",
 		".iframe-8Vtge",
-		"#captchaImg"
+		"#captchaImg",
 	]
 
 	type Point = {
@@ -450,6 +450,45 @@ interface Request {
 		console.log("mouse over at " + x + ", " + y)
 	}
 
+	function mouseDragStart(x: number, y: number): void {
+		let underMouse = document.elementFromPoint(x, y)
+		underMouse.dispatchEvent(
+			new MouseEvent("dragstart", {
+				cancelable: true,
+				bubbles: true,
+				clientX: x,
+				clientY: y
+			})
+		)
+		console.log("mouse drag start at " + x + ", " + y)
+	}
+
+	function mouseDrag(x: number, y: number): void {
+		let underMouse = document.elementFromPoint(x, y)
+		underMouse.dispatchEvent(
+			new MouseEvent("drag", {
+				cancelable: true,
+				bubbles: true,
+				clientX: x,
+				clientY: y
+			})
+		)
+		console.log("mouse drag at " + x + ", " + y)
+	}
+
+	function mouseDragEnd(x: number, y: number): void {
+		let underMouse = document.elementFromPoint(x, y)
+		underMouse.dispatchEvent(
+			new MouseEvent("dragend", {
+				cancelable: true,
+				bubbles: true,
+				clientX: x,
+				clientY: y
+			})
+		)
+		console.log("mouse drag end at " + x + ", " + y)
+	}
+
 	function mouseDown(x: number, y: number): void {
 		let underMouse = document.elementFromPoint(x, y)
 		underMouse.dispatchEvent(
@@ -621,8 +660,12 @@ interface Request {
 		let endY = boundingBox.y + (p2.proportionY * boundingBox.height)
 		mouseOver(startX, startY)
 		mouseDown(startX, startY)
+		mouseDragStart(startX + 1, startY + 1)
 		new Promise(r => setTimeout(r, 300)).then(value => null);
+		mouseDrag(endX - 1, endY - 1)
+		mouseOver(endX, endY)
 		mouseUp(endX, endY)
+		mouseDragEnd(endX, endY)
 	}
 
 	function computePuzzleSlideDistance(proportionX: number, puzzleImageEle: Element): number {
@@ -637,6 +680,13 @@ interface Request {
 		let solution = await swapTwoApiCall(img)
 		let imgEle = await waitForElement(SWAP_TWO_IMAGE)
 		dragProportional(imgEle, solution);
+		await new Promise(resolve => setTimeout(resolve, 3000));
+		if (captchaIsPresent()) {
+			console.log("captcha was still present, retrying")
+			mouseClickSimple(await waitForElement(SWAP_TWO_REFRESH_BUTTON))
+			await new Promise(resolve => setTimeout(resolve, 3000));
+			await solveSwapTwo()
+		}
 	}
 
 	async function solveArcedSlide(): Promise<void> {
