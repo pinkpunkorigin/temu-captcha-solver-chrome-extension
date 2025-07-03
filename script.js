@@ -62,10 +62,10 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     var SWAP_TWO_URL = "https://sadpuzzles.com/api/v1/temu-swap-two?licenseKey=";
     var API_HEADERS = new Headers({ "Content-Type": "application/json" });
     var ELEMENTS_INSIDE_CHALLENGE_SELECTOR = "#Picture *";
-    var ARCED_SLIDE_PUZZLE_IMAGE_SELECTOR = "#slider > img, img[class^=bgImg]";
-    var ARCED_SLIDE_PIECE_CONTAINER_SELECTOR = "#img-button, div[role=dialog] div[style^='position: relative'] div[style^='position: absolute;']";
-    var ARCED_SLIDE_PIECE_IMAGE_SELECTOR = "div[role=dialog] div[style^='position: relative'] div[style^='position: absolute;'] > img";
-    var ARCED_SLIDE_BUTTON_SELECTOR = "#slide-button, div[class^=handleBar] div[style^='position: absolute']";
+    var ARCED_SLIDE_PUZZLE_IMAGE_SELECTOR = "#slider > img, img[class^=bgImg], div[style=\"width: 414px;\"] > div > img";
+    var ARCED_SLIDE_PIECE_CONTAINER_SELECTOR = "#img-button, div[role=dialog] div[style^='position: relative'] div[style^='position: absolute;'], div[style=\"width: 414px;\"] > div:has(img)";
+    var ARCED_SLIDE_PIECE_IMAGE_SELECTOR = "div[role=dialog] div[style^='position: relative'] div[style^='position: absolute;'] > img, div[style=\"width: 414px;\"] > div > img";
+    var ARCED_SLIDE_BUTTON_SELECTOR = "#slide-button, div[class^=handleBar] div[style^='position: absolute'], div[style=\"width: 414px;\"] > div:has(svg._WEB2X55)";
     var ARCED_SLIDE_UNIQUE_IDENTIFIERS = [ARCED_SLIDE_PIECE_CONTAINER_SELECTOR, ".handleBar-vT4I5", ".vT4I57cQ", "div[style=\"width: 414px;\"] #slider", "div[style=\"width: 410px;\"] #slider"];
     var SWAP_TWO_IMAGE = "img[class^=pizzle-box-img]";
     var SWAP_TWO_REFRESH_BUTTON = "svg[class^=refreshSvg]";
