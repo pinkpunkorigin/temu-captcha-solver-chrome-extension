@@ -75,7 +75,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     var PUZZLE_PIECE_IMAGE_SELECTOR = "#img-button > img, img[class^='block-img']";
     var PUZZLE_SLIDER_WRAPPER = ".slider-wrapper, #Slider";
     var PUZZLE_UNIQUE_IDENTIFIERS = ["#Slider"];
-    var SEMANTIC_SHAPES_CHALLENGE_TEXT = "questionDesc-3Idcd";
+    var SEMANTIC_SHAPES_CHALLENGE_TEXT = ".questionDesc-3Idcd";
     var SEMANTIC_SHAPES_IMAGE = "#captchaImg";
     var SEMANTIC_SHAPES_REFRESH_BUTTON = ".refresh-27d6x, .ZVIQM964";
     var SEMANTIC_SHAPES_UNIQUE_IDENTIFIERS = [SEMANTIC_SHAPES_CHALLENGE_TEXT];
