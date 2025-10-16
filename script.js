@@ -75,10 +75,14 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     var PUZZLE_PIECE_IMAGE_SELECTOR = "#img-button > img, img[class^='block-img']";
     var PUZZLE_SLIDER_WRAPPER = ".slider-wrapper, #Slider";
     var PUZZLE_UNIQUE_IDENTIFIERS = ["#Slider"];
+    
+    
     var SEMANTIC_SHAPES_CHALLENGE_TEXT = ".questionDesc-3Idcd";
     var SEMANTIC_SHAPES_IMAGE = "#captchaImg";
-    var SEMANTIC_SHAPES_REFRESH_BUTTON = ".refresh-27d6x, .ZVIQM964";
+    var SEMANTIC_SHAPES_REFRESH_BUTTON = ".text-gSdWn";
     var SEMANTIC_SHAPES_UNIQUE_IDENTIFIERS = [SEMANTIC_SHAPES_CHALLENGE_TEXT];
+    var SEMANTIC_SHAPES_SUBMIT_BUTTON = ".primary-3rODZ"
+    
     var THREE_BY_THREE_IMAGE = "img.loaded";
     var THREE_BY_THREE_TEXT = ".verifyDialog div[role=dialog]";
     var THREE_BY_THREE_CONFIRM_BUTTON = ".verifyDialog div[role=button]:has(span)";
@@ -1138,6 +1142,9 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                     case 16:
                         if (!(i < 5)) return [3 /*break*/, 20];
                         clickProportional(ele, point.proportionX + (i / 50), point.proportionY + (i / 50));
+                        const submitBtn = waitForElement(SEMANTIC_SHAPES_SUBMIT_BUTTON); // selector for the button
+                        submitBtn.click();
+                        console.log("Clicking submit button");
                         return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, 1337); })];
                     case 17:
                         _c.sent();
