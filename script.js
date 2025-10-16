@@ -414,6 +414,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         });
     }
     function anySelectorInListPresent(selectors) {
+        console.log(selectors)
         for (var _i = 0, selectors_2 = selectors; _i < selectors_2.length; _i++) {
             var selector = selectors_2[_i];
             var ele = document.querySelector(selector);
@@ -423,7 +424,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
             }
             var iframe = document.querySelector("iframe");
             if (iframe) {
-                console.log("checking for selector in iframe");
+                console.log("checking for selector in iframe: " + selector);
                 ele = iframe.contentWindow.document.body.querySelector(selector);
                 if (ele) {
                     console.log("Selector is present in iframe: " + selector);
