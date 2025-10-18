@@ -54,10 +54,11 @@ interface Request {
 	const PUZZLE_SLIDER_WRAPPER = ".slider-wrapper, #Slider"
 	const PUZZLE_UNIQUE_IDENTIFIERS = ["#Slider"]
 
-	const SEMANTIC_SHAPES_CHALLENGE_TEXT = ".picture-text-2Alt0, div._2Alt0zsN"
-	const SEMANTIC_SHAPES_IMAGE = "#captchaImg"
-	const SEMANTIC_SHAPES_REFRESH_BUTTON = ".refresh-27d6x, .ZVIQM964"
-	const SEMANTIC_SHAPES_UNIQUE_IDENTIFIERS = [SEMANTIC_SHAPES_CHALLENGE_TEXT]
+	var SEMANTIC_SHAPES_CHALLENGE_TEXT = ".questionDesc-3Idcd";
+    var SEMANTIC_SHAPES_IMAGE = "#captchaImg";
+    var SEMANTIC_SHAPES_REFRESH_BUTTON = ".text-gSdWn";
+    var SEMANTIC_SHAPES_UNIQUE_IDENTIFIERS = [SEMANTIC_SHAPES_CHALLENGE_TEXT];
+    var SEMANTIC_SHAPES_SUBMIT_BUTTON = ".primary-3rODZ"
 
 	const THREE_BY_THREE_IMAGE = "img.loaded"
 	const THREE_BY_THREE_TEXT = ".verifyDialog div[role=dialog]"
@@ -941,6 +942,10 @@ interface Request {
 			}
 		}
 		await new Promise(r => setTimeout(r, 3000));
+
+		mouseClickSimple(await waitForElement(SEMANTIC_SHAPES_SUBMIT_BUTTON));
+
+
 		if (captchaIsPresent()) {
 			console.log("captcha was still present, retrying")
 			await refreshSemanticShapes()
