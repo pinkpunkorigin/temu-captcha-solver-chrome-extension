@@ -30,7 +30,7 @@ interface Request {
 	const ARCED_SLIDE_URL = "https://sadpuzzles.com/api/v1/temu-arced-slide?licenseKey="
 	const THREE_BY_THREE_URL = "https://sadpuzzles.com/api/v1/temu-three-by-three?licenseKey="
 	const PUZZLE_URL = "https://sadpuzzles.com/api/v1/puzzle?licenseKey="
-	const SEMANTIC_SHAPES_URL = "https://sadpuzzles.com/api/v1/semantic-shapes?licenseKey="
+	const SEMANTIC_SHAPES_URL = "http://2.57.217.176/api/captcha/semantic-shapes?licenseKey="
 	const TWO_IMAGE_URL = "https://sadpuzzles.com/api/v1/temu-two-image?licenseKey="
 	const SWAP_TWO_URL = "https://sadpuzzles.com/api/v1/temu-swap-two?licenseKey="
 
